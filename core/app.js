@@ -1,7 +1,15 @@
 // Carcasa de Orvia: sesión, navegación y ajustes.
 // No contiene lógica de ningún módulo; solo los monta según la ruta.
 
-import { sesionActual, alCambiarSesion, enviarAcceso, entrarConCodigo, cerrarSesion } from './auth.js';
+import {
+  sesionActual,
+  alCambiarSesion,
+  entrar,
+  recuperarContrasena,
+  cambiarContrasena,
+  cerrarSesion,
+  LONGITUD_MINIMA,
+} from './auth.js';
 import { exportarTodo } from './db.js';
 import { asegurarAreasIniciales } from './areas.js';
 import { escapar, aviso, marcaOrvia, ICONOS } from './ui/componentes.js';
@@ -10,20 +18,34 @@ import { MODULOS, MODULO_INICIAL } from '../modules/registro.js';
 const raiz = document.getElementById('raiz');
 let sesion = null;
 let carcasaMontada = false;
+let recuperando = false;
 
 // ---------- Arranque ----------
 async function arrancar() {
+  // Si se abre desde el correo de recuperación, la dirección trae type=recovery.
+  recuperando = /type=recovery/.test(location.hash + location.search);
   sesion = await sesionActual();
   pintar();
-  alCambiarSesion((nueva) => {
+  alCambiarSesion((evento, nueva) => {
+    if (evento === 'PASSWORD_RECOVERY') {
+      recuperando = true;
+      sesion = nueva;
+      pintar();
+      return;
+    }
     const cambio = Boolean(nueva) !== Boolean(sesion);
     sesion = nueva;
     if (cambio) pintar();
   });
-  window.addEventListener('hashchange', () => sesion && mostrarRuta());
+  window.addEventListener('hashchange', () => sesion && !recuperando && mostrarRuta());
 }
 
 async function pintar() {
+  if (recuperando && sesion) {
+    carcasaMontada = false;
+    pintarNuevaContrasena();
+    return;
+  }
   if (!sesion) {
     carcasaMontada = false;
     pintarAcceso();
@@ -39,12 +61,23 @@ async function pintar() {
 }
 
 // ---------- Pantalla de acceso ----------
-function pintarAcceso() {
-  let email = '';
-  try {
-    email = localStorage.getItem('orvia-email') || '';
-  } catch {}
+const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function emailGuardado() {
+  try {
+    return localStorage.getItem('orvia-email') || '';
+  } catch {
+    return '';
+  }
+}
+
+function mostrarError(el, texto) {
+  el.textContent = texto;
+  el.hidden = !texto;
+}
+
+function pintarAcceso() {
+  const email = emailGuardado();
   raiz.innerHTML = `
     <main class="acceso">
       <div class="caja">
@@ -53,89 +86,135 @@ function pintarAcceso() {
           <h1>Orvia</h1>
           <p class="suave">Tu vida, en un solo sitio.</p>
         </div>
-        <form id="paso-email" novalidate>
+        <form id="form-entrar" novalidate>
           <div class="campo">
-            <label for="email">Tu correo</label>
-            <input id="email" type="email" autocomplete="email" inputmode="email" required value="${escapar(email)}">
+            <label for="email">Correo</label>
+            <input id="email" type="email" autocomplete="username" inputmode="email" required value="${escapar(email)}">
           </div>
-          <p class="error" id="error-email" hidden></p>
-          <button class="boton ancho" type="submit">Enviarme el acceso</button>
-        </form>
-        <form id="paso-codigo" novalidate hidden>
-          <p>Te he enviado un correo a <strong id="email-enviado"></strong>. Escribe aquí el código o pulsa el enlace del correo en este mismo dispositivo.</p>
           <div class="campo">
-            <label for="codigo">Código del correo</label>
-            <input id="codigo" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="10">
+            <label for="contrasena">Contraseña</label>
+            <input id="contrasena" type="password" autocomplete="current-password" required>
           </div>
-          <p class="error" id="error-codigo" hidden></p>
+          <p class="error" id="error-entrar" role="alert" hidden></p>
+          <p class="confirmacion" id="ok-entrar" role="status" hidden></p>
           <button class="boton ancho" type="submit">Entrar</button>
-          <button class="boton secundario ancho" type="button" id="otro-email">Usar otro correo</button>
+          <button class="boton secundario ancho" type="button" id="olvido">He olvidado mi contraseña</button>
         </form>
       </div>
     </main>`;
 
-  const pasoEmail = raiz.querySelector('#paso-email');
-  const pasoCodigo = raiz.querySelector('#paso-codigo');
-  const errorEmail = raiz.querySelector('#error-email');
-  const errorCodigo = raiz.querySelector('#error-codigo');
+  const form = raiz.querySelector('#form-entrar');
+  const campoEmail = raiz.querySelector('#email');
+  const campoContrasena = raiz.querySelector('#contrasena');
+  const error = raiz.querySelector('#error-entrar');
+  const ok = raiz.querySelector('#ok-entrar');
+  (email ? campoContrasena : campoEmail).focus();
 
-  pasoEmail.addEventListener('submit', async (ev) => {
+  form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    const valor = raiz.querySelector('#email').value.trim().toLowerCase();
-    errorEmail.hidden = true;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
-      errorEmail.textContent = 'Escribe un correo válido, por ejemplo nombre@gmail.com.';
-      errorEmail.hidden = false;
-      return;
-    }
-    const boton = pasoEmail.querySelector('button');
+    mostrarError(ok, '');
+    const valor = campoEmail.value.trim().toLowerCase();
+    if (!EMAIL_VALIDO.test(valor)) return mostrarError(error, 'Escribe un correo válido, por ejemplo nombre@gmail.com.');
+    if (!campoContrasena.value) return mostrarError(error, 'Escribe tu contraseña.');
+    mostrarError(error, '');
+    const boton = form.querySelector('button[type=submit]');
     boton.disabled = true;
-    boton.textContent = 'Enviando…';
+    boton.textContent = 'Entrando…';
     try {
-      await enviarAcceso(valor);
+      await entrar(valor, campoContrasena.value);
       try {
         localStorage.setItem('orvia-email', valor);
       } catch {}
-      email = valor;
-      raiz.querySelector('#email-enviado').textContent = valor;
-      pasoEmail.hidden = true;
-      pasoCodigo.hidden = false;
-      raiz.querySelector('#codigo').focus();
     } catch (e) {
-      errorEmail.textContent = e.message;
-      errorEmail.hidden = false;
-    } finally {
-      boton.disabled = false;
-      boton.textContent = 'Enviarme el acceso';
-    }
-  });
-
-  pasoCodigo.addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const codigo = raiz.querySelector('#codigo').value.replace(/\D/g, '');
-    errorCodigo.hidden = true;
-    if (codigo.length < 6) {
-      errorCodigo.textContent = 'El código tiene al menos 6 cifras.';
-      errorCodigo.hidden = false;
-      return;
-    }
-    const boton = pasoCodigo.querySelector('button[type=submit]');
-    boton.disabled = true;
-    boton.textContent = 'Comprobando…';
-    try {
-      await entrarConCodigo(email, codigo);
-    } catch (e) {
-      errorCodigo.textContent = e.message;
-      errorCodigo.hidden = false;
+      mostrarError(error, e.message);
       boton.disabled = false;
       boton.textContent = 'Entrar';
     }
   });
 
-  raiz.querySelector('#otro-email').addEventListener('click', () => {
-    pasoCodigo.hidden = true;
-    pasoEmail.hidden = false;
-    raiz.querySelector('#email').focus();
+  raiz.querySelector('#olvido').addEventListener('click', async (ev) => {
+    const valor = campoEmail.value.trim().toLowerCase();
+    mostrarError(ok, '');
+    if (!EMAIL_VALIDO.test(valor)) {
+      campoEmail.focus();
+      return mostrarError(error, 'Escribe arriba tu correo y vuelve a pulsar «He olvidado mi contraseña».');
+    }
+    mostrarError(error, '');
+    const boton = ev.currentTarget;
+    boton.disabled = true;
+    try {
+      await recuperarContrasena(valor);
+      mostrarError(ok, `Te he enviado un correo a ${valor}. Ábrelo en este dispositivo y pulsa el enlace para poner una contraseña nueva.`);
+    } catch (e) {
+      mostrarError(error, e.message);
+    } finally {
+      boton.disabled = false;
+    }
+  });
+}
+
+// Formulario de contraseña nueva, reutilizado en la recuperación y en Ajustes.
+function formularioContrasena(id, textoBoton) {
+  return `
+    <form id="${id}" novalidate>
+      <div class="campo">
+        <label for="${id}-nueva">Contraseña nueva</label>
+        <input id="${id}-nueva" type="password" autocomplete="new-password" minlength="${LONGITUD_MINIMA}" required>
+        <span class="ayuda">Al menos ${LONGITUD_MINIMA} caracteres.</span>
+      </div>
+      <div class="campo">
+        <label for="${id}-repite">Repite la contraseña</label>
+        <input id="${id}-repite" type="password" autocomplete="new-password" required>
+      </div>
+      <p class="error" id="${id}-error" role="alert" hidden></p>
+      <button class="boton" type="submit">${textoBoton}</button>
+    </form>`;
+}
+
+function conectarFormularioContrasena(contenedor, id, textoBoton, alTerminar) {
+  const form = contenedor.querySelector('#' + id);
+  const error = contenedor.querySelector(`#${id}-error`);
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const nueva = contenedor.querySelector(`#${id}-nueva`).value;
+    const repite = contenedor.querySelector(`#${id}-repite`).value;
+    if (nueva.length < LONGITUD_MINIMA) return mostrarError(error, `La contraseña debe tener al menos ${LONGITUD_MINIMA} caracteres.`);
+    if (nueva !== repite) return mostrarError(error, 'Las dos contraseñas no coinciden.');
+    mostrarError(error, '');
+    const boton = form.querySelector('button[type=submit]');
+    boton.disabled = true;
+    boton.textContent = 'Guardando…';
+    try {
+      await cambiarContrasena(nueva);
+      form.reset();
+      alTerminar();
+    } catch (e) {
+      mostrarError(error, e.message);
+    } finally {
+      boton.disabled = false;
+      boton.textContent = textoBoton;
+    }
+  });
+}
+
+function pintarNuevaContrasena() {
+  raiz.innerHTML = `
+    <main class="acceso">
+      <div class="caja">
+        ${marcaOrvia()}
+        <div>
+          <h1>Contraseña nueva</h1>
+          <p class="suave">Elige la contraseña con la que entrarás a partir de ahora.</p>
+        </div>
+        ${formularioContrasena('form-recuperar', 'Guardar contraseña')}
+      </div>
+    </main>`;
+  raiz.querySelector('#form-recuperar-nueva').focus();
+  conectarFormularioContrasena(raiz, 'form-recuperar', 'Guardar contraseña', () => {
+    recuperando = false;
+    history.replaceState(null, '', location.pathname + '#/' + MODULO_INICIAL);
+    aviso('Contraseña guardada');
+    pintar();
   });
 }
 
@@ -214,7 +293,11 @@ function pintarAjustes(contenedor) {
     <header class="titulo-modulo"><h1>Ajustes</h1></header>
     <section class="bloque">
       <h2>Cuenta</h2>
-      <p class="suave">Has entrado como ${escapar(sesion?.user?.email || '')}.</p>
+      <p class="suave" style="margin-bottom:var(--esp-4)">Has entrado como ${escapar(sesion?.user?.email || '')}.</p>
+      <details class="desplegable">
+        <summary>Cambiar contraseña</summary>
+        ${formularioContrasena('form-cambiar', 'Cambiar contraseña')}
+      </details>
     </section>
     <section class="bloque">
       <h2>Apariencia</h2>
@@ -233,6 +316,11 @@ function pintarAjustes(contenedor) {
     <section class="bloque">
       <button class="boton peligro" id="salir" type="button">Cerrar sesión</button>
     </section>`;
+
+  conectarFormularioContrasena(contenedor, 'form-cambiar', 'Cambiar contraseña', () => {
+    contenedor.querySelector('.desplegable').open = false;
+    aviso('Contraseña cambiada');
+  });
 
   contenedor.querySelectorAll('input[name=tema]').forEach((r) =>
     r.addEventListener('change', () => aplicarTema(r.value)),

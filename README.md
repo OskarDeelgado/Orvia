@@ -14,7 +14,7 @@ core/
   app.js              sesión, navegación y ajustes
   config.js           URL y clave pública de Supabase, áreas iniciales
   db.js               única puerta de acceso a la base de datos
-  auth.js             acceso sin contraseña (código o enlace por correo)
+  auth.js             acceso con correo y contraseña (registros cerrados)
   areas.js            áreas de vida
   enlaces.js          relaciones libres entre elementos
   ui/                 sistema de diseño común

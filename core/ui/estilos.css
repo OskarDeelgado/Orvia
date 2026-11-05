@@ -509,7 +509,7 @@ textarea {
   display: grid;
   gap: var(--esp-5);
 }
-.acceso .orbita {
+.acceso .caja > svg {
   width: 112px;
   height: 112px;
   color: var(--primario);
@@ -523,9 +523,32 @@ textarea {
   display: grid;
   gap: var(--esp-4);
 }
-.acceso .error {
+.error {
   color: var(--peligro);
   font-size: 0.9375rem;
+}
+.confirmacion {
+  color: var(--exito);
+  font-size: 0.9375rem;
+}
+
+/* Sección desplegable (Ajustes) */
+.desplegable summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primario);
+  padding: var(--esp-2) 0;
+}
+.desplegable[open] summary {
+  margin-bottom: var(--esp-3);
+}
+.desplegable form {
+  display: grid;
+  gap: var(--esp-4);
+  max-width: 360px;
+}
+.desplegable form .boton {
+  justify-self: start;
 }
 
 /* ---------- Panel: órbita de áreas ---------- */
