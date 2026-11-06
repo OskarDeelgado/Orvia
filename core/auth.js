@@ -33,6 +33,14 @@ export async function cambiarContrasena(nueva) {
   if (error) throw new Error(traducir(error));
 }
 
+/** Guarda el nombre con el que te saluda el Panel y devuelve la sesión actualizada. */
+export async function guardarNombre(nombre) {
+  const { error } = await cliente.auth.updateUser({ data: { nombre: nombre.slice(0, 40) } });
+  if (error) throw new Error(traducir(error));
+  await cliente.auth.refreshSession();
+  return sesionActual();
+}
+
 export async function cerrarSesion() {
   await cliente.auth.signOut();
 }

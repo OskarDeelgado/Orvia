@@ -5,24 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Orvia</title>
   <meta name="description" content="Tu ecosistema personal: finanzas, objetivos, proyectos y conocimiento en un solo sitio.">
-  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1322" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0e0f12">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Orvia">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="iconos/icono-192.png" type="image/png">
   <link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
-  <link rel="preload" href="vendor/fuentes/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="vendor/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fuentes/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="core/ui/estilos.css">
-  <script>
-    // Aplica el tema guardado antes de pintar, para evitar un parpadeo.
-    try {
-      var t = localStorage.getItem('orvia-tema');
-      if (t === 'claro' || t === 'oscuro') document.documentElement.setAttribute('data-tema', t);
-    } catch (e) {}
-  </script>
 </head>
 <body>
   <div id="raiz"><div class="cargando">Abriendo Orvia…</div></div>

@@ -3,7 +3,7 @@
 // conexión, la copia guardada. Las llamadas a Supabase no se tocan nunca.
 // Al cambiar archivos de la carcasa, sube VERSION para refrescar la caché.
 
-const VERSION = 'orvia-v2';
+const VERSION = 'orvia-v3';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -14,18 +14,16 @@ const ARCHIVOS = [
   'core/config.js',
   'core/db.js',
   'core/enlaces.js',
+  'core/panel.js',
   'core/ui/componentes.js',
   'core/ui/estilos.css',
   'modules/registro.js',
-  'modules/panel/index.js',
-  'modules/accion/index.js',
   'modules/finanzas/index.js',
+  'modules/accion/index.js',
   'modules/conocimiento/index.js',
   'vendor/supabase.js',
-  'vendor/fuentes/inter-latin-wght-normal.woff2',
-  'vendor/fuentes/inter-latin-ext-wght-normal.woff2',
-  'vendor/fuentes/bricolage-grotesque-latin-wght-normal.woff2',
-  'vendor/fuentes/bricolage-grotesque-latin-ext-wght-normal.woff2',
+  'vendor/fuentes/manrope-latin-wght-normal.woff2',
+  'vendor/fuentes/manrope-latin-ext-wght-normal.woff2',
   'iconos/icono-192.png',
   'iconos/icono-512.png',
   'iconos/apple-touch-icon.png',

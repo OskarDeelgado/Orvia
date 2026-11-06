@@ -5,13 +5,15 @@ Ecosistema personal: finanzas, objetivos, proyectos y conocimiento en una sola a
 - **App:** web instalable (PWA), alojada en GitHub Pages.
 - **Datos:** Supabase (PostgreSQL). Cada fila solo la puede leer su propietario.
 - **Sin compilación:** JavaScript con módulos nativos. Publicar = subir cambios a `main`.
+- **Diseño:** solo modo oscuro. Panel en grafito; cada módulo es un «mundo» con su color (`data-mundo`).
 
 ## Estructura
 
 ```
 index.html            carcasa: carga estilos, cliente de Supabase y la app
 core/
-  app.js              sesión, navegación y ajustes
+  app.js              sesión, navegación (#/ Panel, #/<módulo>, #/ajustes) y ajustes
+  panel.js            el Panel: globo con los módulos en órbita y datos clave
   config.js           URL y clave pública de Supabase, áreas iniciales
   db.js               única puerta de acceso a la base de datos
   auth.js             acceso con correo y contraseña (registros cerrados)
@@ -19,11 +21,11 @@ core/
   enlaces.js          relaciones libres entre elementos
   ui/                 sistema de diseño común
 modules/
-  registro.js         lista de módulos
-  panel/ accion/ finanzas/ conocimiento/
+  registro.js         lista de módulos (cada uno es una bola en la órbita)
+  finanzas/ accion/ conocimiento/
 supabase/
   001_nucleo.sql      tablas del núcleo y seguridad por fila
-vendor/               supabase-js y fuentes, servidos localmente
+vendor/               supabase-js y la fuente Manrope, servidos localmente
 ```
 
 ## Reglas

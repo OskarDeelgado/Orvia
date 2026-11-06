@@ -1,4 +1,5 @@
 // Carcasa de Orvia: sesión, navegación y ajustes.
+// Rutas: #/ → Panel · #/<módulo> → el mundo de ese módulo · #/ajustes.
 // No contiene lógica de ningún módulo; solo los monta según la ruta.
 
 import {
@@ -8,17 +9,21 @@ import {
   recuperarContrasena,
   cambiarContrasena,
   cerrarSesion,
+  guardarNombre,
   LONGITUD_MINIMA,
 } from './auth.js';
 import { exportarTodo } from './db.js';
 import { asegurarAreasIniciales } from './areas.js';
-import { escapar, aviso, marcaOrvia, ICONOS } from './ui/componentes.js';
-import { MODULOS, MODULO_INICIAL } from '../modules/registro.js';
+import { escapar, aviso, globo, ICONOS } from './ui/componentes.js';
+import { pintarPanel } from './panel.js';
+import { MODULOS } from '../modules/registro.js';
 
 const raiz = document.getElementById('raiz');
 let sesion = null;
-let carcasaMontada = false;
 let recuperando = false;
+let areasComprobadas = false;
+let origenZoom = null; // punto de la pantalla desde el que se entra en un módulo
+let rutaAnterior = null;
 
 // ---------- Arranque ----------
 async function arrancar() {
@@ -42,21 +47,17 @@ async function arrancar() {
 
 async function pintar() {
   if (recuperando && sesion) {
-    carcasaMontada = false;
     pintarNuevaContrasena();
     return;
   }
   if (!sesion) {
-    carcasaMontada = false;
     pintarAcceso();
     return;
   }
-  try {
-    await asegurarAreasIniciales();
-  } catch (e) {
-    aviso(e.message, { error: true });
+  if (!areasComprobadas) {
+    areasComprobadas = true;
+    asegurarAreasIniciales().catch((e) => aviso(e.message, { error: true }));
   }
-  montarCarcasa();
   mostrarRuta();
 }
 
@@ -81,7 +82,7 @@ function pintarAcceso() {
   raiz.innerHTML = `
     <main class="acceso">
       <div class="caja">
-        ${marcaOrvia({ animada: true })}
+        ${globo(96)}
         <div>
           <h1>Orvia</h1>
           <p class="suave">Tu vida, en un solo sitio.</p>
@@ -201,7 +202,7 @@ function pintarNuevaContrasena() {
   raiz.innerHTML = `
     <main class="acceso">
       <div class="caja">
-        ${marcaOrvia()}
+        ${globo(96)}
         <div>
           <h1>Contraseña nueva</h1>
           <p class="suave">Elige la contraseña con la que entrarás a partir de ahora.</p>
@@ -212,85 +213,85 @@ function pintarNuevaContrasena() {
   raiz.querySelector('#form-recuperar-nueva').focus();
   conectarFormularioContrasena(raiz, 'form-recuperar', 'Guardar contraseña', () => {
     recuperando = false;
-    history.replaceState(null, '', location.pathname + '#/' + MODULO_INICIAL);
+    history.replaceState(null, '', location.pathname + '#/');
     aviso('Contraseña guardada');
     pintar();
   });
 }
 
-// ---------- Carcasa ----------
-function montarCarcasa() {
-  if (carcasaMontada) return;
-  carcasaMontada = true;
+// ---------- Navegación ----------
+function rutaActual() {
+  return (location.hash.replace(/^#\/?/, '').split('/')[0] || '').toLowerCase();
+}
+
+// El botón "+" está siempre a mano. Hoy apunta un gasto (llega con Finanzas).
+function botonMas() {
+  const boton = document.createElement('button');
+  boton.className = 'boton-mas';
+  boton.type = 'button';
+  boton.setAttribute('aria-label', 'Apuntar un gasto');
+  boton.innerHTML = ICONOS.mas;
+  boton.addEventListener('click', () => aviso('Apuntar gastos llega con Finanzas, antes del 20 de diciembre.'));
+  return boton;
+}
+
+/** Pinta el mundo de un módulo o de Ajustes: aurora de su color, flecha de vuelta y contenido. */
+function pintarMundo({ id, titulo }) {
+  const desdePanel = rutaAnterior === '' && origenZoom;
   raiz.innerHTML = `
-    <div class="app">
-      <header class="cabecera">
-        <a class="marca" href="#/${MODULO_INICIAL}" aria-label="Orvia, ir al panel">${marcaOrvia()}<span>Orvia</span></a>
-        <span class="espacio"></span>
-        <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>
-      </header>
-      <nav class="navegacion" aria-label="Módulos">
-        ${MODULOS.map((m) => `<a href="#/${m.id}" data-modulo="${m.id}">${ICONOS[m.icono]}<span>${escapar(m.nombre)}</span></a>`).join('')}
-      </nav>
-      <main class="contenido" id="contenido" tabindex="-1"></main>
+    <div class="mundo${desdePanel ? ' entrar' : ''}" ${id ? `data-mundo="${id}"` : ''}>
+      <span class="aurora a1" aria-hidden="true"></span>
+      <span class="aurora a2" aria-hidden="true"></span>
+      <main class="mundo-contenido">
+        <header class="mundo-cabecera">
+          <a class="volver" href="#/" aria-label="Volver al Panel">${ICONOS.volver}</a>
+          <h1>${escapar(titulo)}</h1>
+        </header>
+        <div id="contenido"></div>
+      </main>
     </div>`;
+  if (desdePanel) {
+    const mundo = raiz.querySelector('.mundo');
+    mundo.style.setProperty('--origen-x', origenZoom.x + 'px');
+    mundo.style.setProperty('--origen-y', origenZoom.y + 'px');
+  }
+  origenZoom = null;
+  return raiz.querySelector('#contenido');
 }
 
 async function mostrarRuta() {
-  const id = (location.hash.replace(/^#\/?/, '').split('/')[0] || MODULO_INICIAL).toLowerCase();
-  const contenedor = document.getElementById('contenido');
-  if (!contenedor) return;
-
-  document.querySelectorAll('.navegacion a').forEach((a) => {
-    if (a.dataset.modulo === id) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
-
-  if (id === 'ajustes') {
-    document.title = 'Ajustes · Orvia';
-    pintarAjustes(contenedor);
-    return;
-  }
-
-  const modulo = MODULOS.find((m) => m.id === id);
-  if (!modulo) {
-    location.replace(`#/${MODULO_INICIAL}`);
-    return;
-  }
-  document.title = `${modulo.nombre} · Orvia`;
-  try {
-    await modulo.montar(contenedor, { sesion });
-  } catch (e) {
-    contenedor.innerHTML = `<p class="suave">No se pudo abrir ${escapar(modulo.nombre)}: ${escapar(e.message)}</p>`;
-  }
+  const id = rutaActual();
   window.scrollTo(0, 0);
+
+  if (id === '') {
+    document.title = 'Orvia';
+    pintarPanel(raiz, { sesion, alEntrarEnModulo: (punto) => (origenZoom = punto) });
+    raiz.append(botonMas());
+  } else if (id === 'ajustes') {
+    document.title = 'Ajustes · Orvia';
+    pintarAjustes(pintarMundo({ id: null, titulo: 'Ajustes' }));
+  } else {
+    const modulo = MODULOS.find((m) => m.id === id);
+    if (!modulo) {
+      location.replace('#/');
+      return;
+    }
+    document.title = `${modulo.nombre} · Orvia`;
+    const contenedor = pintarMundo({ id: modulo.id, titulo: modulo.nombre });
+    raiz.querySelector('.mundo').append(botonMas());
+    try {
+      await modulo.montar(contenedor, { sesion });
+    } catch (e) {
+      contenedor.innerHTML = `<p class="suave">No se pudo abrir ${escapar(modulo.nombre)}: ${escapar(e.message)}</p>`;
+    }
+  }
+  rutaAnterior = id;
 }
 
 // ---------- Ajustes ----------
-function temaGuardado() {
-  try {
-    return localStorage.getItem('orvia-tema') || 'auto';
-  } catch {
-    return 'auto';
-  }
-}
-
-function aplicarTema(tema) {
-  const html = document.documentElement;
-  if (tema === 'auto') html.removeAttribute('data-tema');
-  else html.setAttribute('data-tema', tema);
-  try {
-    localStorage.setItem('orvia-tema', tema);
-  } catch {}
-}
-
 function pintarAjustes(contenedor) {
-  const tema = temaGuardado();
-  const opcion = (valor, texto) =>
-    `<label class="opcion"><input type="radio" name="tema" value="${valor}" ${tema === valor ? 'checked' : ''}> ${texto}</label>`;
-
+  const nombre = sesion?.user?.user_metadata?.nombre || '';
   contenedor.innerHTML = `
-    <header class="titulo-modulo"><h1>Ajustes</h1></header>
     <section class="bloque">
       <h2>Cuenta</h2>
       <p class="suave" style="margin-bottom:var(--esp-4)">Has entrado como ${escapar(sesion?.user?.email || '')}.</p>
@@ -300,13 +301,14 @@ function pintarAjustes(contenedor) {
       </details>
     </section>
     <section class="bloque">
-      <h2>Apariencia</h2>
-      <fieldset style="border:0;padding:0;margin:var(--esp-3) 0 0">
-        <legend class="oculto-visual">Tema</legend>
-        <div class="areas">
-          ${opcion('auto', 'Automático')}${opcion('claro', 'Claro')}${opcion('oscuro', 'Oscuro')}
+      <h2>Tu nombre</h2>
+      <form id="form-nombre" class="fila-nombre" novalidate>
+        <div class="campo">
+          <label for="nombre" class="oculto-visual">Nombre con el que te saluda el Panel</label>
+          <input id="nombre" autocomplete="given-name" maxlength="40" value="${escapar(nombre)}" placeholder="Cómo quieres que te salude el Panel">
         </div>
-      </fieldset>
+        <button class="boton secundario" type="submit">Guardar</button>
+      </form>
     </section>
     <section class="bloque">
       <h2>Copia de seguridad</h2>
@@ -322,9 +324,19 @@ function pintarAjustes(contenedor) {
     aviso('Contraseña cambiada');
   });
 
-  contenedor.querySelectorAll('input[name=tema]').forEach((r) =>
-    r.addEventListener('change', () => aplicarTema(r.value)),
-  );
+  contenedor.querySelector('#form-nombre').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const boton = ev.currentTarget.querySelector('button');
+    boton.disabled = true;
+    try {
+      sesion = (await guardarNombre(contenedor.querySelector('#nombre').value.trim())) || sesion;
+      aviso('Nombre guardado');
+    } catch (e) {
+      aviso(e.message, { error: true });
+    } finally {
+      boton.disabled = false;
+    }
+  });
 
   contenedor.querySelector('#exportar').addEventListener('click', async (ev) => {
     const boton = ev.currentTarget;
@@ -349,7 +361,7 @@ function pintarAjustes(contenedor) {
 
   contenedor.querySelector('#salir').addEventListener('click', async () => {
     await cerrarSesion();
-    location.hash = '';
+    history.replaceState(null, '', location.pathname);
   });
 }
 
