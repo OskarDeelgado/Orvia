@@ -1,10 +1,14 @@
-// Panel: el centro de Orvia. Globo en el medio, módulos en órbita y,
-// debajo, los datos clave. Solo lee; no guarda datos propios.
+// Panel: el centro de Orvia.
+// - En el ordenador: la oficina 3D, con las fichas del equipo debajo.
+// - En el móvil: un panel ligero con tu despacho (datos clave) y la ficha de cada
+//   agente; la oficina 3D se abre solo si la pides (#/oficina).
+// Solo lee; no guarda datos propios.
 
-import { escapar, marcaOrvia, globo, ICONOS } from './ui/componentes.js';
+import { escapar, marcaOrvia, ICONOS } from './ui/componentes.js';
 import { MODULOS } from '../modules/registro.js';
 
-const DURACION_ORBITA = 27; // segundos por vuelta; igual que en estilos.css
+// Ordenador = pantalla ancha con ratón. Con eso basta para decidir qué Panel mostrar.
+export const ES_ESCRITORIO = matchMedia('(min-width: 900px) and (pointer: fine)');
 
 function saludo() {
   const h = new Date().getHours();
@@ -13,82 +17,136 @@ function saludo() {
   if (h < 21) return 'Buenas tardes';
   return 'Buenas noches';
 }
-
 function fechaLarga() {
   const texto = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
-
 function mesActual() {
   return new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
 }
 
-function bolas() {
-  const n = MODULOS.length;
-  return MODULOS.map((m, i) => {
-    const pronto = m.estado !== 'activo';
-    // Reparte las bolas por la órbita. Sin animación, se quedan en estas posiciones.
-    const posicion = (12 + (i * 100) / n).toFixed(1);
-    const retraso = (-(i * DURACION_ORBITA) / n).toFixed(2);
-    const etiqueta = pronto ? `${m.nombre}, todavía en preparación` : `Abrir ${m.nombre}`;
-    return `<a class="bola${pronto ? ' pronto' : ''}" href="#/${m.id}" data-mundo="${m.id}"
-        aria-label="${escapar(etiqueta)}"
-        style="offset-distance:${posicion}%;animation-delay:${retraso}s">
-      <span class="esfera"></span>
-      <span class="nombre">${escapar(m.nombre)}</span>
-    </a>`;
-  }).join('');
+// Datos clave. Se rellenarán cuando existan Finanzas y Acción.
+function datosClave() {
+  return { queda: '—', patrimonio: '—', tareas: 'Llegan con Acción' };
 }
 
-/** Pinta el Panel. Devuelve la posición de la bola pulsada para el zoom de entrada. */
-export function pintarPanel(raiz, { sesion, alEntrarEnModulo }) {
-  const nombre = sesion?.user?.user_metadata?.nombre;
+function cabecera(nombre) {
+  return `
+    <header class="panel-cabecera">
+      <span class="marca">${marcaOrvia()}Orvia</span>
+      <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>
+    </header>
+    <div class="panel-saludo">
+      <p>${fechaLarga()}</p>
+      <h1>${saludo()}${nombre ? ', ' + escapar(nombre) : ''}</h1>
+    </div>`;
+}
+
+function avatar(inicial, color) {
+  return `<span class="avatar" style="--c:${color}" aria-hidden="true">${escapar(inicial)}</span>`;
+}
+
+/** Ficha de un agente. En el móvil abre su módulo; en el ordenador entra en su despacho. */
+function fichaAgente(m, { comoEnlace }) {
+  const a = m.agente;
+  const contenido = `
+    ${avatar(a.nombre.charAt(0), a.color)}
+    <span class="agente-texto">
+      <span class="agente-nombre">${escapar(a.nombre)}</span>
+      <span class="agente-puesto">${escapar(a.puesto)}</span>
+      <span class="agente-pie"><span class="chip" style="--c:${a.color}">${escapar(m.nombre)}</span><span class="agente-situacion">${escapar(a.situacion)}</span></span>
+    </span>`;
+  return comoEnlace
+    ? `<a class="agente" href="#/${m.id}" data-mundo="${m.id}" aria-label="${escapar(`${a.nombre}, ${a.puesto}. Abrir ${m.nombre}`)}">${contenido}<span class="agente-flecha" aria-hidden="true">›</span></a>`
+    : `<button class="agente" type="button" data-sala="${m.id}" aria-pressed="false">${contenido}</button>`;
+}
+
+/** Panel ligero del móvil. */
+function pintarPanelMovil(raiz, { nombre }) {
+  const d = datosClave();
   raiz.innerHTML = `
     <main class="panel volviendo">
-      <header class="panel-cabecera">
-        <span class="marca">${marcaOrvia()}Orvia</span>
-        <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>
-      </header>
+      ${cabecera(nombre)}
 
-      <div class="panel-saludo">
-        <p>${fechaLarga()}</p>
-        <h1>${saludo()}${nombre ? ', ' + escapar(nombre) : ''}</h1>
-      </div>
-
-      <nav class="hub" aria-label="Módulos">
-        <svg width="350" height="300" viewBox="0 0 350 300" aria-hidden="true">
-          <ellipse cx="175" cy="150" rx="150" ry="58" fill="none" stroke="rgb(138 180 255 / .18)"/>
-        </svg>
-        ${globo(120)}
-        ${bolas()}
-      </nav>
-
-      <section class="datos-clave" aria-label="Datos clave">
-        <div class="bloque dato">
-          <span class="etiqueta">Te quedan en ${mesActual()}</span>
-          <span class="cifra">—</span>
-          <span class="nota">Cuando esté Finanzas</span>
+      <section class="bloque despacho" aria-labelledby="t-despacho">
+        <h2 id="t-despacho">Tu despacho</h2>
+        <div class="datos-clave">
+          <div class="dato"><span class="etiqueta">Te quedan en ${mesActual()}</span><span class="cifra">${d.queda}</span></div>
+          <div class="dato"><span class="etiqueta">Patrimonio</span><span class="cifra">${d.patrimonio}</span></div>
         </div>
-        <div class="bloque dato">
-          <span class="etiqueta">Patrimonio</span>
-          <span class="cifra">—</span>
-          <span class="nota">Cuando esté Finanzas</span>
-        </div>
+        <p class="nota-despacho">Hoy: ${escapar(d.tareas)}. Las cifras aparecerán cuando esté Finanzas.</p>
       </section>
 
-      <section class="bloque" aria-labelledby="t-hoy">
-        <h2 id="t-hoy">Hoy</h2>
-        <div class="lista-hoy">
-          <p class="vacia">Tus tareas del día aparecerán aquí cuando llegue Acción.</p>
-        </div>
+      <section aria-labelledby="t-equipo">
+        <h2 id="t-equipo" class="titulo-seccion">Tu equipo</h2>
+        <div class="equipo">${MODULOS.map((m) => fichaAgente(m, { comoEnlace: true })).join('')}</div>
+      </section>
+
+      <a class="boton secundario ancho" href="#/oficina">Ver la oficina en 3D</a>
+    </main>`;
+  return () => {};
+}
+
+/** Oficina 3D con sus fichas debajo (Panel del ordenador o #/oficina en el móvil). */
+function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
+  const fichaTuya = `
+    <button class="agente" type="button" data-sala="direccion" aria-pressed="false">
+      ${avatar((nombre || 'Tú').charAt(0), '#8ab4ff')}
+      <span class="agente-texto">
+        <span class="agente-nombre">${escapar(nombre || 'Tu despacho')}</span>
+        <span class="agente-puesto">Director general</span>
+        <span class="agente-pie"><span class="chip" style="--c:#8ab4ff">Dirección</span><span class="agente-situacion">Tus datos clave</span></span>
+      </span>
+    </button>`;
+
+  raiz.innerHTML = `
+    <main class="panel-oficina volviendo">
+      ${pantallaCompleta
+        ? `<header class="mundo-cabecera"><a class="volver" href="#/" aria-label="Volver al Panel">${ICONOS.volver}</a><h1>Oficina</h1></header>`
+        : cabecera(nombre)}
+      <section class="oficina" id="oficina" aria-label="Oficina en 3D"></section>
+      <section aria-labelledby="t-equipo">
+        <h2 id="t-equipo" class="titulo-seccion">Tu equipo</h2>
+        <div class="equipo equipo-fila">${fichaTuya}${MODULOS.map((m) => fichaAgente(m, { comoEnlace: false })).join('')}</div>
       </section>
     </main>`;
 
-  // Guarda desde qué punto de la pantalla se entra, para que el zoom salga de la bola.
-  raiz.querySelectorAll('.bola').forEach((bola) => {
-    bola.addEventListener('click', () => {
-      const r = bola.querySelector('.esfera').getBoundingClientRect();
-      alEntrarEnModulo({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-    });
+  const escena = raiz.querySelector('#oficina');
+  let oficina = null;
+  let cancelado = false;
+
+  // Las fichas entran en el despacho de cada agente.
+  raiz.querySelector('.equipo').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-sala]');
+    if (!b || !oficina) return;
+    oficina.entrar(b.dataset.sala);
+    escena.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   });
+  escena.addEventListener('sala', (ev) => {
+    raiz.querySelectorAll('.equipo [data-sala]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sala === ev.detail)));
+  });
+
+  import('./oficina.js')
+    .then(({ montarOficina }) => montarOficina(escena, { modulos: MODULOS, nombreUsuario: nombre, datos: datosClave(), alAbrirModulo }))
+    .then((o) => {
+      if (cancelado) o.destruir();
+      else oficina = o;
+    })
+    .catch((e) => {
+      console.error(e);
+      escena.innerHTML = '<p class="oficina-estado">No se pudo mostrar la oficina en 3D en este dispositivo. Usa las fichas del equipo para entrar en cada área.</p>';
+    });
+
+  return () => {
+    cancelado = true;
+    oficina?.destruir();
+  };
+}
+
+/** Pinta el Panel adecuado. Devuelve una función que libera lo que haga falta al salir. */
+export function pintarPanel(raiz, { sesion, alAbrirModulo, soloOficina = false }) {
+  const nombre = sesion?.user?.user_metadata?.nombre;
+  if (soloOficina) return pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta: true });
+  if (ES_ESCRITORIO.matches) return pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta: false });
+  return pintarPanelMovil(raiz, { nombre });
 }

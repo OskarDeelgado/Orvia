@@ -3,8 +3,16 @@ import { moduloPendiente } from '../../core/ui/componentes.js';
 export default {
   id: 'finanzas',
   nombre: 'Finanzas',
-  // 'activo': bola brillante en la órbita. 'pronto': bola atenuada.
+  // 'activo': módulo en marcha o en construcción. 'pronto': aún en preparación.
   estado: 'activo',
+  // Responsable del módulo en la oficina y en el panel del móvil.
+  agente: {
+    nombre: 'Zack',
+    puesto: 'Director financiero',
+    color: '#818cf8',
+    tarea: 'Lleva tus sobres, el Sobrante, el ahorro y las inversiones.',
+    situacion: 'En construcción · lista en diciembre',
+  },
   async montar(contenedor) {
     contenedor.innerHTML = moduloPendiente({
       fase: 'En construcción · listo antes del 20 de diciembre',

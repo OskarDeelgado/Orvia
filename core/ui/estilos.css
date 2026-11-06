@@ -428,83 +428,6 @@ textarea {
   margin-top: var(--esp-1);
 }
 
-/* El centro: globo y módulos en órbita */
-.hub {
-  position: relative;
-  flex-shrink: 0;
-  width: 350px;
-  height: 300px;
-  align-self: center;
-  border-radius: var(--radio-l);
-  background: radial-gradient(circle at 50% 50%, #1a2133, #111318 72%);
-  border: 1px solid var(--linea-suave);
-}
-.hub > svg {
-  position: absolute;
-  inset: 0;
-}
-.hub .globo-escena {
-  --globo: 120px;
-  position: absolute;
-  left: 115px;
-  top: 90px;
-  z-index: 2;
-}
-.bola {
-  position: absolute;
-  left: 0;
-  top: 0;
-  offset-path: path('M25,150 a150,58 0 1,0 300,0 a150,58 0 1,0 -300,0');
-  offset-rotate: 0deg;
-  width: 76px;
-  height: 80px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--tinta);
-  text-decoration: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  z-index: 3;
-}
-.bola .esfera {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #fff, var(--mundo-claro) 22%, var(--mundo-1) 55%, var(--mundo-oscuro) 92%);
-  box-shadow: 0 0 22px color-mix(in srgb, var(--mundo-1) 70%, transparent);
-}
-.bola .nombre {
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.bola.pronto .esfera {
-  width: 34px;
-  height: 34px;
-  opacity: 0.55;
-  box-shadow: none;
-}
-.bola.pronto .nombre {
-  color: var(--tinta-suave);
-  font-weight: 600;
-}
-.bola:focus-visible {
-  outline: 2px solid var(--acento);
-  outline-offset: 2px;
-  border-radius: 12px;
-}
-@media (max-width: 380px) {
-  .hub {
-    transform: scale(0.9);
-    transform-origin: top center;
-    margin-bottom: -30px;
-  }
-}
-
 .datos-clave {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -539,6 +462,218 @@ textarea {
 .lista-hoy .vacia {
   color: var(--tinta-suave);
   font-size: 0.9375rem;
+}
+
+/* Tu despacho (móvil) */
+.despacho .datos-clave {
+  margin-top: var(--esp-3);
+}
+.nota-despacho {
+  margin-top: var(--esp-3);
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+.titulo-seccion {
+  margin: var(--esp-2) 0 var(--esp-3);
+  font-size: 1.0625rem;
+}
+
+/* Fichas de los agentes */
+.equipo {
+  display: grid;
+  gap: var(--esp-3);
+}
+.equipo-fila {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+}
+.agente {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-4);
+  width: 100%;
+  padding: var(--esp-4);
+  border-radius: var(--radio-m);
+  border: 1px solid var(--linea);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 60%), var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.agente:hover {
+  border-color: #3a4150;
+}
+.agente[aria-pressed='true'] {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 1px var(--acento) inset;
+}
+.avatar {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #0e0f12;
+  background: radial-gradient(circle at 32% 28%, #fff, var(--c) 45%, color-mix(in srgb, var(--c) 40%, #000) 95%);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 35%, transparent);
+}
+.agente-texto {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.agente-nombre {
+  font-weight: 800;
+  font-size: 1.0625rem;
+}
+.agente-puesto {
+  color: var(--tinta-suave);
+  font-size: 0.875rem;
+}
+.agente-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+.agente-situacion {
+  font-size: 0.75rem;
+  color: var(--tinta-apagada);
+}
+.agente-flecha {
+  font-size: 1.5rem;
+  color: var(--tinta-apagada);
+}
+.chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c, var(--acento));
+  background: color-mix(in srgb, var(--c, var(--acento)) 16%, transparent);
+}
+
+/* ---------- Oficina 3D ---------- */
+.panel-oficina {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + var(--esp-5)) max(var(--esp-5), env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 112px) max(var(--esp-5), env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+}
+.panel-oficina > * {
+  min-width: 0;
+}
+.oficina {
+  position: relative;
+  min-width: 0;
+  height: clamp(420px, 68vh, 760px);
+  border-radius: var(--radio-l);
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 40%, #161c2b, #0b0c0f 75%);
+  border: 1px solid var(--linea);
+}
+.oficina-lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+.oficina-estado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-5);
+  text-align: center;
+  color: var(--tinta-suave);
+  font-size: 0.9375rem;
+}
+.oficina-pista {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgb(14 15 18 / 0.72);
+  border: 1px solid var(--linea);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--tinta-suave);
+  font-size: 0.8125rem;
+  text-align: center;
+  pointer-events: none;
+}
+.oficina-volver {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 14px;
+  border: 1px solid var(--linea);
+  background: rgb(22 24 29 / 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--tinta);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.oficina-volver svg {
+  width: 18px;
+  height: 18px;
+}
+.oficina-info {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  max-width: 380px;
+  padding: 14px 16px;
+  border-radius: var(--radio-m);
+  background: rgb(14 15 18 / 0.82);
+  border: 1px solid var(--linea);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: grid;
+  gap: 4px;
+}
+.oficina-info .nombre {
+  font-weight: 800;
+  font-size: 1.125rem;
+}
+.oficina-info .puesto {
+  color: var(--tinta-suave);
+  font-size: 0.875rem;
+}
+.oficina-info .tarea {
+  font-size: 0.875rem;
+}
+.oficina-info .chip {
+  justify-self: start;
+  margin-top: 4px;
+}
+.oficina-info .boton {
+  justify-self: start;
+  margin-top: var(--esp-2);
+  background: var(--c);
 }
 
 /* ---------- Mundo de un módulo ---------- */
@@ -724,15 +859,6 @@ textarea {
   .globo {
     animation: girar-globo 20s linear infinite;
   }
-  .bola {
-    animation: orbitar 27s linear infinite;
-  }
-  .hub:hover .bola,
-  .hub:active .bola,
-  .hub:focus-within .bola,
-  .hub:hover .globo {
-    animation-play-state: paused;
-  }
   .mundo .aurora {
     animation: aurora 14s ease-in-out infinite alternate;
   }
@@ -750,32 +876,6 @@ textarea {
   }
   to {
     transform: rotateX(-16deg) rotateY(360deg);
-  }
-}
-/* La bola pasa por delante del globo (más grande) y por detrás (más pequeña). */
-@keyframes orbitar {
-  0% {
-    offset-distance: 0%;
-    transform: scale(1);
-    z-index: 3;
-  }
-  25% {
-    transform: scale(1.2);
-  }
-  50% {
-    transform: scale(1);
-    z-index: 3;
-  }
-  50.01% {
-    z-index: 1;
-  }
-  75% {
-    transform: scale(0.72);
-  }
-  100% {
-    offset-distance: 100%;
-    transform: scale(1);
-    z-index: 1;
   }
 }
 @keyframes aurora {

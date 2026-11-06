@@ -1,5 +1,5 @@
 // Carcasa de Orvia: sesión, navegación y ajustes.
-// Rutas: #/ → Panel · #/<módulo> → el mundo de ese módulo · #/ajustes.
+// Rutas: #/ → Panel · #/oficina → oficina 3D (móvil) · #/<módulo> → el mundo de ese módulo · #/ajustes.
 // No contiene lógica de ningún módulo; solo los monta según la ruta.
 
 import {
@@ -15,7 +15,7 @@ import {
 import { exportarTodo } from './db.js';
 import { asegurarAreasIniciales } from './areas.js';
 import { escapar, aviso, globo, ICONOS } from './ui/componentes.js';
-import { pintarPanel } from './panel.js';
+import { pintarPanel, ES_ESCRITORIO } from './panel.js';
 import { MODULOS } from '../modules/registro.js';
 
 const raiz = document.getElementById('raiz');
@@ -24,6 +24,7 @@ let recuperando = false;
 let areasComprobadas = false;
 let origenZoom = null; // punto de la pantalla desde el que se entra en un módulo
 let rutaAnterior = null;
+let limpiarVista = null; // libera la vista anterior (la oficina 3D usa la tarjeta gráfica)
 
 // ---------- Arranque ----------
 async function arrancar() {
@@ -43,9 +44,13 @@ async function arrancar() {
     if (cambio) pintar();
   });
   window.addEventListener('hashchange', () => sesion && !recuperando && mostrarRuta());
+  // Si la ventana pasa de ordenador a móvil (o al revés) estando en el Panel, se repinta.
+  ES_ESCRITORIO.addEventListener('change', () => sesion && !recuperando && rutaActual() === '' && mostrarRuta());
 }
 
 async function pintar() {
+  limpiarVista?.();
+  limpiarVista = null;
   if (recuperando && sesion) {
     pintarNuevaContrasena();
     return;
@@ -237,7 +242,7 @@ function botonMas() {
 
 /** Pinta el mundo de un módulo o de Ajustes: aurora de su color, flecha de vuelta y contenido. */
 function pintarMundo({ id, titulo }) {
-  const desdePanel = rutaAnterior === '' && origenZoom;
+  const desdePanel = (rutaAnterior === '' || rutaAnterior === 'oficina') && origenZoom;
   raiz.innerHTML = `
     <div class="mundo${desdePanel ? ' entrar' : ''}" ${id ? `data-mundo="${id}"` : ''}>
       <span class="aurora a1" aria-hidden="true"></span>
@@ -259,13 +264,30 @@ function pintarMundo({ id, titulo }) {
   return raiz.querySelector('#contenido');
 }
 
+// Abrir un módulo desde la oficina: el zoom de entrada sale del centro de la escena.
+function abrirModuloDesdeOficina(id) {
+  const escena = document.getElementById('oficina');
+  const r = escena?.getBoundingClientRect();
+  origenZoom = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+  location.hash = '#/' + id;
+}
+
 async function mostrarRuta() {
   const id = rutaActual();
+  limpiarVista?.();
+  limpiarVista = null;
   window.scrollTo(0, 0);
 
-  if (id === '') {
-    document.title = 'Orvia';
-    pintarPanel(raiz, { sesion, alEntrarEnModulo: (punto) => (origenZoom = punto) });
+  if (id === '' || id === 'oficina') {
+    document.title = id === 'oficina' ? 'Oficina · Orvia' : 'Orvia';
+    limpiarVista = pintarPanel(raiz, { sesion, alAbrirModulo: abrirModuloDesdeOficina, soloOficina: id === 'oficina' });
+    // En el móvil, el zoom de entrada sale de la ficha tocada.
+    raiz.querySelectorAll('a.agente').forEach((a) =>
+      a.addEventListener('click', () => {
+        const r = a.querySelector('.avatar').getBoundingClientRect();
+        origenZoom = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }),
+    );
     raiz.append(botonMas());
   } else if (id === 'ajustes') {
     document.title = 'Ajustes · Orvia';

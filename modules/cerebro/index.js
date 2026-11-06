@@ -4,6 +4,14 @@ export default {
   id: 'cerebro',
   nombre: 'Segundo cerebro',
   estado: 'pronto',
+  // Responsable del módulo en la oficina y en el panel del móvil.
+  agente: {
+    nombre: 'Jude',
+    puesto: 'Bibliotecario',
+    color: '#fbbf24',
+    tarea: 'Guarda todo lo que sabes de ti, tus ideas, proyectos y negocios.',
+    situacion: 'Llega en marzo',
+  },
   async montar(contenedor) {
     contenedor.innerHTML = moduloPendiente({
       fase: 'Llega en marzo y abril de 2027',
