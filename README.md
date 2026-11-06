@@ -22,7 +22,7 @@ core/
   ui/                 sistema de diseño común
 modules/
   registro.js         lista de módulos (cada uno es una bola en la órbita)
-  finanzas/ accion/ conocimiento/
+  finanzas/ accion/ cerebro/
 supabase/
   001_nucleo.sql      tablas del núcleo y seguridad por fila
 vendor/               supabase-js y la fuente Manrope, servidos localmente

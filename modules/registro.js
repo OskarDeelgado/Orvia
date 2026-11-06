@@ -6,6 +6,6 @@
 
 import finanzas from './finanzas/index.js';
 import accion from './accion/index.js';
-import conocimiento from './conocimiento/index.js';
+import cerebro from './cerebro/index.js';
 
-export const MODULOS = [finanzas, accion, conocimiento];
+export const MODULOS = [finanzas, accion, cerebro];
