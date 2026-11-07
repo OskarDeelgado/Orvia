@@ -763,6 +763,142 @@ textarea {
   margin-top: var(--esp-1);
 }
 
+/* Listas de datos (Finanzas y otros módulos) */
+.cristal h2 {
+  font-size: 1.0625rem;
+  margin-bottom: var(--esp-2);
+}
+.subtitulo {
+  margin: var(--esp-4) 0 var(--esp-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+.lista-filas {
+  margin: var(--esp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--esp-3);
+  padding: var(--esp-2) 0;
+  border-bottom: 1px solid var(--cristal-linea);
+  font-size: 0.9375rem;
+}
+.fila:last-child {
+  border-bottom: 0;
+}
+.fila dt,
+.fila dd {
+  margin: 0;
+}
+.fila > :first-child {
+  min-width: 0;
+}
+.fila > :last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+.fila.total {
+  font-weight: 700;
+}
+.fila.inactiva {
+  opacity: 0.6;
+}
+.cifra-fila {
+  font-variant-numeric: tabular-nums;
+}
+.punto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: var(--esp-2);
+  border-radius: 50%;
+  background: var(--c);
+  vertical-align: 1px;
+}
+.conteo {
+  margin-top: var(--esp-3);
+  font-size: 0.8125rem;
+}
+.nota-pequena {
+  margin-top: var(--esp-3);
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+  margin-top: var(--esp-4);
+}
+.avisos-importacion {
+  margin: var(--esp-3) 0 0;
+  padding-left: 1.2em;
+  color: var(--alerta);
+  font-size: 0.875rem;
+}
+.opciones-arranque {
+  display: grid;
+  gap: var(--esp-3);
+  margin-top: var(--esp-4);
+}
+.opcion-arranque {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-3);
+  width: 100%;
+  padding: var(--esp-4);
+  border-radius: var(--radio-m);
+  border: 1px solid var(--cristal-linea);
+  background: rgb(255 255 255 / 0.04);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.opcion-arranque:hover,
+.opcion-arranque:focus-within {
+  border-color: var(--mundo-acento);
+}
+.opcion-arranque strong {
+  display: block;
+  margin-bottom: 2px;
+}
+.opcion-arranque .suave {
+  display: block;
+  font-size: 0.875rem;
+}
+.opcion-icono {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mundo-1) 30%, transparent);
+  color: var(--mundo-acento);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.opcion-icono svg {
+  width: 20px;
+  height: 20px;
+}
+#archivo-sobrea:focus-visible + .opcion-arranque,
+.zona-reemplazar input:focus-visible + label {
+  outline: 2px solid var(--acento);
+}
+.zona-reemplazar .boton {
+  margin-top: var(--esp-3);
+}
+#vista-previa:not(:empty) {
+  margin-top: var(--esp-3);
+}
+
 /* Chip de área */
 .areas {
   display: flex;

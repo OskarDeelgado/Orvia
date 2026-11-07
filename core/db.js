@@ -14,7 +14,7 @@ export const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE
   },
 });
 
-// Todas las tablas del núcleo. Las de Finanzas se añadirán en la fase 1a.
+// Todas las tablas: núcleo (001) y Finanzas (002). La copia de seguridad las incluye todas.
 export const TABLAS = [
   'areas',
   'objetivos',
@@ -24,6 +24,16 @@ export const TABLAS = [
   'habitos_registros',
   'notas',
   'enlaces',
+  'fin_config',
+  'fin_sueldos',
+  'fin_pagas_extra',
+  'fin_sobres',
+  'fin_porcentajes',
+  'fin_conceptos',
+  'fin_recurrentes',
+  'fin_movimientos',
+  'fin_inversiones',
+  'fin_aportaciones',
 ];
 
 function comprobar({ data, error }, accion) {
@@ -90,6 +100,11 @@ export async function contar(tabla) {
     .eq('archivado', false);
   if (error) throw new Error(`No se pudo contar ${tabla}: ${error.message}`);
   return count ?? 0;
+}
+
+/** Ejecuta una función de la base de datos (por ejemplo, fin_importar). */
+export async function llamar(funcion, argumentos = {}) {
+  return comprobar(await cliente.rpc(funcion, argumentos), 'completar la operación');
 }
 
 // Copia completa de todos tus datos, incluidos los archivados.
