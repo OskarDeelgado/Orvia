@@ -44,6 +44,8 @@ async function arrancar() {
     if (cambio) pintar();
   });
   window.addEventListener('hashchange', () => sesion && !recuperando && mostrarRuta());
+  // Un módulo puede pedir que se vuelva a pintar (por ejemplo, Finanzas tras configurarse).
+  window.addEventListener('orvia:recargar-modulo', () => sesion && !recuperando && mostrarRuta());
   // Si la ventana pasa de ordenador a móvil (o al revés) estando en el Panel, se repinta.
   ES_ESCRITORIO.addEventListener('change', () => sesion && !recuperando && rutaActual() === '' && mostrarRuta());
 }
@@ -229,14 +231,22 @@ function rutaActual() {
   return (location.hash.replace(/^#\/?/, '').split('/')[0] || '').toLowerCase();
 }
 
-// El botón "+" está siempre a mano. Hoy apunta un gasto (llega con Finanzas).
+// El botón "+" está siempre a mano. Hace la acción rápida del módulo que la ofrece
+// (hoy, Finanzas: apuntar un gasto).
+const ACCION_RAPIDA = MODULOS.find((m) => m.accionRapida)?.accionRapida;
+
+function ejecutarAccionRapida() {
+  if (!ACCION_RAPIDA) return;
+  Promise.resolve(ACCION_RAPIDA.ejecutar()).catch((e) => aviso(e.message, { error: true }));
+}
+
 function botonMas() {
   const boton = document.createElement('button');
   boton.className = 'boton-mas';
   boton.type = 'button';
-  boton.setAttribute('aria-label', 'Apuntar un gasto');
+  boton.setAttribute('aria-label', ACCION_RAPIDA?.etiqueta || 'Añadir');
   boton.innerHTML = ICONOS.mas;
-  boton.addEventListener('click', () => aviso('Apuntar gastos llega con Finanzas, antes del 20 de diciembre.'));
+  boton.addEventListener('click', ejecutarAccionRapida);
   return boton;
 }
 
@@ -273,7 +283,13 @@ function abrirModuloDesdeOficina(id) {
 }
 
 async function mostrarRuta() {
-  const id = rutaActual();
+  let id = rutaActual();
+  // #/gasto (atajo del iPhone): abre el Panel con el panel de apuntar gasto ya abierto.
+  if (id === 'gasto') {
+    history.replaceState(null, '', location.pathname + '#/');
+    id = '';
+    setTimeout(ejecutarAccionRapida, 50);
+  }
   limpiarVista?.();
   limpiarVista = null;
   window.scrollTo(0, 0);

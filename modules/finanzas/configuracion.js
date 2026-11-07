@@ -75,7 +75,7 @@ function pintarBienvenida(contenedor) {
       pintarVistaPrevia(previa, traducirSobrea(st), {
         origen: `Copia de Sobrea${fecha ? ' del ' + new Date(fecha).toLocaleDateString('es-ES') : ''}`,
         reemplazar: false,
-        alTerminar: () => montarConfiguracion(contenedor),
+        alTerminar: () => dispatchEvent(new CustomEvent('orvia:recargar-modulo')),
       });
     } catch (e) {
       aviso(e.message, { error: true });
@@ -85,7 +85,7 @@ function pintarBienvenida(contenedor) {
     pintarVistaPrevia(previa, configuracionBasica(), {
       origen: 'Configuración básica',
       reemplazar: false,
-      alTerminar: () => montarConfiguracion(contenedor),
+      alTerminar: () => dispatchEvent(new CustomEvent('orvia:recargar-modulo')),
     });
   });
 }
@@ -205,7 +205,10 @@ function pintarResumen(contenedor, { config, mes, sueldo, pagas, reparto, cuenta
       pintarVistaPrevia(previa, traducirSobrea(st), {
         origen: `Copia de Sobrea${fecha ? ' del ' + new Date(fecha).toLocaleDateString('es-ES') : ''}`,
         reemplazar: true,
-        alTerminar: () => montarConfiguracion(contenedor),
+        alTerminar: () => {
+          dispatchEvent(new CustomEvent('orvia:finanzas'));
+          montarConfiguracion(contenedor);
+        },
       });
     } catch (e) {
       aviso(e.message, { error: true });

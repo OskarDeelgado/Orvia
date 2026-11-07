@@ -50,17 +50,20 @@ function comprobar({ data, error }, accion) {
  * @param {string} tabla
  * @param {object} [opciones]
  * @param {object} [opciones.filtros]  igualdades campo → valor
+ * @param {object} [opciones.rango]    { campo, desde, hasta }: desde incluido, hasta excluido
  * @param {string} [opciones.orden]    campo por el que ordenar
  * @param {boolean} [opciones.ascendente=true]
  * @param {boolean} [opciones.incluirArchivados=false]
  */
 export async function listar(tabla, opciones = {}) {
-  const { filtros = {}, orden = 'creado', ascendente = true, incluirArchivados = false } = opciones;
+  const { filtros = {}, rango = null, orden = 'creado', ascendente = true, incluirArchivados = false } = opciones;
   let consulta = cliente.from(tabla).select('*');
   if (!incluirArchivados) consulta = consulta.eq('archivado', false);
   for (const [campo, valor] of Object.entries(filtros)) {
     consulta = valor === null ? consulta.is(campo, null) : consulta.eq(campo, valor);
   }
+  if (rango?.desde != null) consulta = consulta.gte(rango.campo, rango.desde);
+  if (rango?.hasta != null) consulta = consulta.lt(rango.campo, rango.hasta);
   consulta = consulta.order(orden, { ascending: ascendente });
   return comprobar(await consulta, `leer ${tabla}`);
 }
