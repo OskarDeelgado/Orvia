@@ -13,7 +13,7 @@
 //   ahorro (sav)       cuenta de ahorro (incluye el fondo)
 //   sobrante (huc)     lo no gastado de cada sobre, acumulado, menos lo aportado a objetivos
 
-import { mesDe, sumarMeses, distanciaMeses, cuotaDelMes, hoy, euros } from './calculo.js';
+import { mesDe, sumarMeses, distanciaMeses, cuotaDelMes, hoy, euros, movimientosDelMes, fechaRepeticion } from './calculo.js';
 
 const EPS = 0.004;
 
@@ -207,6 +207,159 @@ export function crearMotor(libro) {
     return n.charAt(0).toUpperCase() + n.slice(1) + ' ' + m.slice(0, 4);
   };
 
+  // ---------- Inicio y Análisis ----------
+  /** Último mes con datos (movimientos o inversiones), o el mes que se abre por defecto (aE en Sobrea). */
+  function kFinal() {
+    let k = kInicial();
+    for (const r of movimientos) k = Math.max(k, kDe(r.fecha));
+    for (const r of inversiones) k = Math.max(k, kDe(r.fecha));
+    return k;
+  }
+  /** Meses de los gráficos de evolución: los últimos 6 o 12, o todos (0). */
+  const ventana = (rango) => {
+    const e = kFinal(), lo = rango ? Math.max(0, e - rango + 1) : 0, r = [];
+    for (let k = lo; k <= e; k++) r.push(k);
+    return r;
+  };
+  /** Último porcentaje del historial de un sobre (aunque empiece en un mes futuro). */
+  const ultimoPorcentaje = (s) => { const h = pctDe[s.id] || []; return h.length ? numero(h[h.length - 1].porcentaje) : 0; };
+  /** Sugerencias de reajuste de porcentajes según el gasto de los 3 últimos meses cerrados (máx. ±2 puntos). */
+  function sugerencias() {
+    const c = kHoy();
+    if (c < 3) return [];
+    const k0 = c - 3, meses = [k0, k0 + 1, k0 + 2];
+    const I = meses.reduce((a, k) => a + ingresoMes(k), 0);
+    if (!(I > 0)) return [];
+    const vivos = gasto.filter((s) => !s.hasta_mes);
+    const ahorro0 = 1 - vivos.reduce((a, s) => a + ultimoPorcentaje(s), 0) - (fondo ? ultimoPorcentaje(fondo) : 0);
+    const out = [];
+    for (const s of vivos) {
+      if ((s.desde_mes ? kDe(s.desde_mes) : 0) > k0) continue;
+      const S = meses.reduce((a, k) => a + gastado(s, k), 0);
+      if (!(S > 0)) continue;
+      const actual = ultimoPorcentaje(s), real = S / I;
+      const delta = Math.max(-0.02, Math.min(0.02, real - actual));
+      const propuesto = Math.round((actual + delta) * 1000) / 1000;
+      if (Math.abs(propuesto - actual) < 0.0049) continue;
+      out.push({ sobre: s, actual, real, propuesto, media: S / 3, ahorro: ahorro0 - (propuesto - actual), ahorro0 });
+    }
+    return out;
+  }
+  /** Próximos cobros recurrentes en los 14 días siguientes a hoy (máx. 3). */
+  function proximosCobros() {
+    const h = hoy();
+    const lim = new Date(Date.UTC(+h.slice(0, 4), +h.slice(5, 7) - 1, +h.slice(8, 10) + 14)).toISOString().slice(0, 10);
+    return (libro.recurrentes || [])
+      .filter((r) => r.activo && porId[r.sobre_id])
+      .map((r) => ({ r, fecha: fechaRepeticion(r, r.siguiente) }))
+      .filter((x) => x.fecha > h && x.fecha <= lim)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .slice(0, 3);
+  }
+  /** Avisos de Inicio, en el orden de Sobrea. */
+  function avisos(k) {
+    const av = [];
+    for (const s of sobresDelMes(k)) {
+      const x = gastado(s, k), y = presupuesto(s, k);
+      if (x > y + EPS) av.push({ tipo: 'mal', icono: '!', texto: `${s.nombre}: te has pasado ${euros(x - y)}` });
+      else if (y > 0 && x / y >= 0.8 && y - x >= 0.005) av.push({ tipo: 'atencion', icono: '!', texto: `${s.nombre}: llevas el ${Math.round((x / y) * 100)} % del presupuesto` });
+    }
+    const p = cierrePendiente();
+    if (p) av.push({ tipo: 'info', icono: '↗', texto: `Decide cuánto aportas a ${p.g.o.titulo} (cierre de ${nombreMesK(p.k)})`, accion: { etiqueta: 'Decidir aportación', cierre: `${p.g.o.id}:${p.k}` } });
+    const n = sugerencias().length;
+    if (n) av.push({ tipo: 'info', icono: '%', texto: `${n} ${n === 1 ? 'sugerencia' : 'sugerencias'} de reajuste de porcentajes`, accion: { etiqueta: 'Revisar en Ajustes', pestana: 'configuracion' } });
+    for (const { r, fecha } of proximosCobros()) {
+      av.push({ tipo: 'info', icono: '↻', texto: `Próximo cobro: ${r.concepto}, ${euros(numero(r.importe))} el ${fecha.slice(8)}/${fecha.slice(5, 7)}` });
+    }
+    if (!av.length) av.push({ tipo: 'bien', icono: '✓', texto: 'Todo en orden este mes' });
+    return av;
+  }
+
+  /**
+   * Análisis del mes k frente a tu media (anData en Sobrea): compara con los meses
+   * anteriores (hasta 6) que tienen gasto, sin Extraordinarios, por categoría y concepto.
+   */
+  function analisis(k) {
+    const c = kHoy();
+    if (k > c) return { no: 'futuro' };
+    let meses = [];
+    for (let j = Math.max(0, k - 6); j < k; j++) meses.push(j);
+    const deGasto = new Set(gasto.map((s) => s.id));
+    const filas = (j) => movimientosDelMesK(j).filter((r) => deGasto.has(r.sobre_id));
+    const total = (j) => filas(j).reduce((a, r) => a + r.cuenta, 0);
+    meses = meses.filter((j) => total(j) > EPS);
+    if (meses.length < 2) return { no: 'pocos', n: meses.length };
+
+    const esActual = k === c;
+    const D = esActual ? +hoy().slice(8, 10) : null;
+    const dim = diasMesK(k);
+    const dia = (r) => +r.fecha.slice(8, 10);
+    const hasta = (r) => D == null || dia(r) <= D;
+    const A = {};
+    const de = (s) => A[s] || (A[s] = { td: 0, fl: 0, n: 0, cur: 0, cn: {} });
+    const deC = (o, cn) => o.cn[cn] || (o.cn[cn] = { td: 0, fl: 0, cur: 0 });
+    for (const s of gasto) de(s.id).n = meses.filter((j) => activo(s, j)).length;
+
+    const mediaAcum = new Array(dim + 1).fill(0);
+    for (const j of meses) {
+      const dj = diasMesK(j);
+      const por = new Array(Math.max(dim, dj) + 2).fill(0);
+      for (const r of filas(j)) {
+        const o = de(r.sobre_id), cc = deC(o, r.concepto || '');
+        o.fl += r.cuenta; cc.fl += r.cuenta;
+        if (hasta(r)) { o.td += r.cuenta; cc.td += r.cuenta; }
+        por[dia(r)] += r.cuenta;
+      }
+      let acum = 0;
+      for (let d = 1; d <= dim; d++) {
+        acum += por[d] || 0;
+        if (d === dim) for (let x = dim + 1; x < por.length; x++) acum += por[x] || 0;
+        mediaAcum[d] += acum;
+      }
+    }
+    for (let d = 1; d <= dim; d++) mediaAcum[d] /= meses.length;
+
+    const actuales = filas(k).filter(hasta);
+    const acumActual = new Array(dim + 1).fill(0), porDia = new Array(dim + 2).fill(0);
+    for (const r of actuales) {
+      const o = de(r.sobre_id), cc = deC(o, r.concepto || '');
+      o.cur += r.cuenta; cc.cur += r.cuenta;
+      porDia[dia(r)] += r.cuenta;
+    }
+    const ultimo = D == null ? dim : Math.min(D, dim);
+    let a2 = 0;
+    for (let d = 1; d <= ultimo; d++) { a2 += porDia[d] || 0; acumActual[d] = a2; }
+
+    const fiable = !esActual || D >= 7;
+    const relevante = (dv, av) => fiable && Math.abs(dv) >= 15 && (av > 0 ? Math.abs(dv) / av >= 0.2 : true);
+    const cats = [];
+    let curT = 0, mediaT = 0, mediaCompletaT = 0, proyT = 0;
+    for (const s of gasto) {
+      const o = A[s.id];
+      if (!o || (!o.n && !o.cur)) continue;
+      const hist = o.n > 0, aT = hist ? o.td / o.n : 0, aF = hist ? o.fl / o.n : 0, dv = o.cur - aT;
+      const pj = esActual ? o.cur + Math.max(0, aF - aT) : o.cur;
+      const cn = Object.keys(o.cn).map((nombre) => {
+        const x = o.cn[nombre], cT = hist ? x.td / o.n : 0, cF = hist ? x.fl / o.n : 0, d2 = x.cur - cT;
+        return {
+          nombre, cur: x.cur, media: cT, mediaCompleta: cF, dif: d2, pct: cT > 0 ? d2 / cT : null,
+          nuevo: hist && cT === 0 && x.cur > 0, relevante: hist && relevante(d2, cT),
+          proyeccion: esActual ? x.cur + Math.max(0, cF - cT) : x.cur,
+        };
+      }).filter((x) => x.cur > EPS || x.media > EPS).sort((a, b) => Math.abs(b.dif) - Math.abs(a.dif));
+      cats.push({ sobre: s, hist, cur: o.cur, media: aT, mediaCompleta: aF, dif: dv, pct: aT > 0 ? dv / aT : null, relevante: hist && relevante(dv, aT), proyeccion: pj, cn });
+      curT += o.cur;
+      if (hist) { mediaT += aT; mediaCompletaT += aF; }
+      proyT += pj;
+    }
+    cats.sort((a, b) => Math.abs(b.dif) - Math.abs(a.dif));
+    const curH = cats.filter((x) => x.hist).reduce((a, x) => a + x.cur, 0);
+    const bud = sobresDelMes(k).reduce((a, s) => a + presupuesto(s, k), 0);
+    return { esActual, D, dim, meses, cats, curT, curH, mediaT, mediaCompletaT, proyT, bud, mediaAcum, acumActual, ultimo, fiable };
+  }
+  const movimientosDelMesK = (k) => movimientosDelMes(movimientos, mesK(k));
+  const diasMesK = (k) => { const m = mesK(k); return new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0)).getUTCDate(); };
+
   // ---------- Resumen del mes (pestaña Mes, Inicio y Panel) ----------
   function resumenMes(k) {
     const lista = sobresDelMes(k);
@@ -255,6 +408,7 @@ export function crearMotor(libro) {
     activo, porcentaje, ingresoMes, presupuesto, gastado, efectivo, ingresosExtra, sobresDelMes,
     traspaso, fondoEn, saldo, ahorroCuenta, invertido, ahorroEInversion, sobrante, margen, aportadoHasta, patrimonio,
     resumenMes,
+    kFinal, ventana, sugerencias, proximosCobros, avisos, analisis, movimientosDelMesK, ultimoPorcentaje,
     objetivos, objetivo, cuotaObjetivo, situacionObjetivo, cierrePendiente, disponibleObjetivos, nombreMesK,
   };
 }

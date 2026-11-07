@@ -2,20 +2,24 @@ import { escapar, aviso } from '../../core/ui/componentes.js';
 import { listar } from '../../core/db.js';
 import { montarConfiguracion } from './configuracion.js';
 import { montarMes, fechaPropuesta } from './mes.js';
+import { montarInicio } from './inicio.js';
+import { montarAnalisis } from './analisis.js';
 import { montarSobrante } from './sobrante.js';
 import { montarAhorro } from './ahorro.js';
 import { revisarCierres } from './objetivos.js';
 import { generarRecurrentes } from './datos.js';
 
-// Pestañas de Finanzas, en el orden de Sobrea. Inicio y Análisis llegan en el
-// bloque 5; los Ajustes completos (como los de Sobrea), en el bloque 6.
+// Pestañas de Finanzas, en el orden de Sobrea. Los Ajustes completos (como los de
+// Sobrea) llegan en el bloque 6.
 const PESTANAS = [
+  { id: 'inicio', nombre: 'Inicio', montar: montarInicio },
   { id: 'mes', nombre: 'Mes', montar: montarMes },
   { id: 'sobrante', nombre: 'Sobrante', montar: montarSobrante },
   { id: 'ahorro', nombre: 'Ahorro', montar: montarAhorro },
+  { id: 'analisis', nombre: 'Análisis', montar: montarAnalisis },
   { id: 'configuracion', nombre: 'Ajustes', montar: montarConfiguracion },
 ];
-let pestanaActual = 'mes';
+let pestanaActual = 'inicio';
 
 export default {
   id: 'finanzas',
@@ -77,6 +81,16 @@ export default {
       if (b && b.dataset.pestana !== pestanaActual) mostrar(b.dataset.pestana);
     });
     mostrar(pestanaActual);
+
+    // Los enlaces de Inicio ("Ver el mes", "Gestionar"…) cambian de pestaña.
+    const alIr = (e) => {
+      if (!contenedor.isConnected) return removeEventListener('orvia:finanzas-pestana', alIr);
+      if (PESTANAS.some((p) => p.id === e.detail)) {
+        mostrar(e.detail);
+        scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    addEventListener('orvia:finanzas-pestana', alIr);
 
     // Como Sobrea: si algún objetivo tiene un mes terminado sin cerrar, lo pregunta.
     setTimeout(revisarCierres, 500);

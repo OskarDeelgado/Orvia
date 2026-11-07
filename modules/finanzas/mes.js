@@ -16,7 +16,15 @@ let ultimoQueda = null;
 export function montarMes(contenedor) {
   return montarVista(contenedor, {
     pintar,
-    async alClic(e, { motor }) {
+    async alClic(e, { motor, k }) {
+      const informe = e.target.closest('[data-informe]');
+      if (informe) {
+        informe.disabled = true;
+        const { informePdf, exportarExcel } = await import('./informes.js');
+        await (informe.dataset.informe === 'pdf' ? informePdf(motor, k) : exportarExcel(motor, k));
+        informe.disabled = false;
+        return;
+      }
       const borrar = e.target.closest('[data-borrar]');
       if (borrar) {
         const mov = motor.libro.movimientos.find((m) => m.id === borrar.dataset.borrar);
@@ -74,13 +82,17 @@ function pintar(contenedor, motor, k) {
     <section class="seccion-movs" aria-labelledby="t-movs">
       <h2 id="t-movs" class="titulo-seccion">Movimientos del mes</h2>
       ${listaMovimientos(motor, r)}
-    </section>`;
+    </section>
+    <div class="botones-informe">
+      <button class="boton ancho" type="button" data-informe="pdf">Informe del mes (PDF)</button>
+      <button class="boton secundario ancho" type="button" data-informe="excel">Exportar movimientos a Excel</button>
+    </div>`;
 
   animarCifra(contenedor.querySelector('#cifra-queda'), r.queda);
 }
 
 /** Anillo de un sobre con sus estados: quedan, casi al límite, agotado o te has pasado. */
-function anillo({ sobre, gastado, presupuesto }) {
+export function anillo({ sobre, gastado, presupuesto }) {
   const o = presupuesto > 0 ? gastado / presupuesto : gastado > 0 ? 1 : 0;
   const relleno = Math.min(1, o) * 100;
   const pct = Math.round(o * 100);
@@ -149,7 +161,7 @@ function filaMovimiento(m, motor, ingreso) {
 }
 
 /** La cifra de "te queda" cuenta hasta su nuevo valor, como en Sobrea. */
-function animarCifra(el, hasta) {
+export function animarCifra(el, hasta) {
   const desde = ultimoQueda;
   ultimoQueda = hasta;
   if (!el || desde == null || Math.abs(desde - hasta) < 0.005 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
