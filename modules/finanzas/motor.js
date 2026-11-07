@@ -161,6 +161,52 @@ export function crearMotor(libro) {
     return { cuenta: a, ahorro: b, inversion: c, total: a + b + c };
   }
 
+  // ---------- Objetivos de ahorro (salen del Sobrante, como en Sobrea) ----------
+  // Cada objetivo va de un mes (m0) a otro (m1). "revisado" es el último mes cuyo
+  // cierre ya se ha hecho (aportando u omitiendo); en Sobrea se llama hk.
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const objetivos = libro.objetivos || [];
+  function objetivo(o) {
+    const m0 = kDe(o.fecha_inicio), m1 = kDe(o.fecha_limite);
+    const revisado = o.revisado_hasta ? kDe(o.revisado_hasta) : null;
+    const meta = numero(o.valor_meta);
+    const aportado = r2(aportaciones.reduce((a, c) => (c.objetivo_id === o.id ? a + numero(c.importe) : a), 0));
+    const conseguido = aportado >= meta - 0.005;
+    const hueco = Math.max(m0, Math.min(m1, revisado == null ? m0 : revisado + 1));
+    return { o, m0, m1, revisado, meta, aportado, conseguido, hueco, falta: Math.max(0, r2(meta - aportado)) };
+  }
+  /** Cuota sugerida en el mes k: lo que falta entre los meses que quedan hasta el final. */
+  const cuotaObjetivo = (g, k) => Math.max(0, g.meta - g.aportado) / Math.max(1, g.m1 - k + 1);
+  /** Cómo va: conseguido, plazo vencido, empieza en…, o por delante/por detrás/al día. */
+  function situacionObjetivo(g) {
+    const actual = kHoy();
+    if (g.conseguido) return '✓ Conseguido';
+    if (actual > g.m1) return 'Plazo vencido';
+    const ultimoCerrado = Math.min(actual - 1, g.m1);
+    if (ultimoCerrado < g.m0) return 'Empieza en ' + nombreMesK(g.m0);
+    const esperado = (g.meta * (ultimoCerrado - g.m0 + 1)) / (g.m1 - g.m0 + 1);
+    const dif = g.aportado - esperado;
+    return dif > 0.005 ? `Vas ${euros(dif)} por delante` : dif < -0.005 ? `Vas ${euros(-dif)} por detrás` : 'Vas al día';
+  }
+  /** Primer cierre de mes pendiente (meses ya terminados sin revisar), o null. */
+  function cierrePendiente() {
+    const actual = kHoy();
+    for (const o of objetivos) {
+      const g = objetivo(o);
+      if (g.conseguido) continue;
+      const k = g.revisado == null ? g.m0 : g.revisado + 1;
+      if (k >= 0 && k <= g.m1 && k <= actual - 1) return { g, k };
+    }
+    return null;
+  }
+  /** Lo que se puede aportar en el mes k: el Sobrante acumulado y lo que sobró ese mes. */
+  const disponibleObjetivos = (k) => ({ hay: r2(sobrante(k)), sobro: r2(Math.max(0, margen(k))) });
+  const nombreMesK = (k) => {
+    const m = mesK(k);
+    const n = new Intl.DateTimeFormat('es-ES', { month: 'long', timeZone: 'UTC' }).format(new Date(m + 'T00:00:00Z'));
+    return n.charAt(0).toUpperCase() + n.slice(1) + ' ' + m.slice(0, 4);
+  };
+
   // ---------- Resumen del mes (pestaña Mes, Inicio y Panel) ----------
   function resumenMes(k) {
     const lista = sobresDelMes(k);
@@ -209,5 +255,6 @@ export function crearMotor(libro) {
     activo, porcentaje, ingresoMes, presupuesto, gastado, efectivo, ingresosExtra, sobresDelMes,
     traspaso, fondoEn, saldo, ahorroCuenta, invertido, ahorroEInversion, sobrante, margen, aportadoHasta, patrimonio,
     resumenMes,
+    objetivos, objetivo, cuotaObjetivo, situacionObjetivo, cierrePendiente, disponibleObjetivos, nombreMesK,
   };
 }

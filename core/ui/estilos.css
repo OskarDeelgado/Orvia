@@ -909,9 +909,13 @@ textarea {
   background: var(--cristal);
   border: 1px solid var(--cristal-linea);
   overflow-x: auto;
+  scrollbar-width: none;
+}
+.pestanas::-webkit-scrollbar {
+  display: none;
 }
 .pestanas button {
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 38px;
   padding: 0 var(--esp-3);
   border: 0;
@@ -1537,4 +1541,198 @@ body.con-hoja {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* ---------- Sobrante, objetivos y Ahorro ---------- */
+.contexto-mes {
+  margin: calc(var(--esp-1) * -1) 0 var(--esp-3);
+  font-size: 0.875rem;
+  text-align: center;
+}
+.cifra-grande {
+  display: block;
+  margin: var(--esp-2) 0;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cifra-grande.negativa,
+.texto-peligro {
+  color: var(--peligro);
+}
+.texto-exito {
+  color: var(--exito);
+}
+.tinta {
+  color: var(--tinta);
+}
+.cristal > p + p {
+  margin-top: var(--esp-1);
+}
+.cristal .suave {
+  font-size: 0.875rem;
+}
+.fila.fila-cifra {
+  align-items: center;
+  border-bottom: 0;
+  padding: 0;
+}
+.fila-cifra .etiqueta {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+.fila-cifra .derecha {
+  text-align: right;
+}
+.caja {
+  margin-top: var(--esp-3);
+  padding: var(--esp-3) var(--esp-4);
+  border-radius: var(--radio-m);
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid var(--cristal-linea);
+}
+.caja .fila:last-child {
+  padding-bottom: 0;
+}
+.barra {
+  height: 8px;
+  margin: var(--esp-3) 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+.barra > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mundo-acento), var(--mundo-claro));
+}
+.objetivo .fila {
+  border-bottom: 0;
+  padding: 0;
+}
+.objetivo .barra {
+  margin: var(--esp-2) 0;
+}
+.dos-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--esp-2);
+  margin-top: var(--esp-3);
+}
+.dos-botones .boton {
+  min-width: 0;
+}
+.objetivo-nuevo,
+.objetivo-detalle,
+.edicion-inversion,
+#form-inversion,
+#form-aportar {
+  display: grid;
+  gap: var(--esp-3);
+}
+.objetivo-detalle {
+  margin-top: var(--esp-3);
+  padding-top: var(--esp-3);
+  border-top: 1px solid var(--cristal-linea);
+}
+.objetivo-detalle .boton.peligro.ancho {
+  margin-top: 0;
+}
+.objetivo-detalle .subtitulo {
+  margin: 0;
+}
+.cristal > .boton.ancho,
+.cristal > .caja + .boton,
+.objetivo + .objetivo-nuevo,
+.objetivo + .boton {
+  margin-top: var(--esp-3);
+}
+.lista-simple {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lista-simple .fila {
+  align-items: center;
+}
+.fila-fin {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-1);
+}
+.fila-fin .mov-borrar {
+  margin-right: calc(var(--esp-3) * -1);
+}
+.campo select {
+  min-height: 48px;
+  padding: 0 var(--esp-3);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--superficie);
+  color: var(--tinta);
+  font: inherit;
+}
+.patrimonio-linea {
+  margin: var(--esp-3) var(--esp-1);
+  font-size: 0.875rem;
+}
+.lista-inversiones {
+  margin-top: var(--esp-3);
+  padding: 0;
+}
+.lista-inversiones .mov {
+  padding-left: 0;
+}
+.lista-inversiones .edicion-inversion {
+  padding: 0 0 var(--esp-3);
+}
+#form-inversion .segmentos .segmento {
+  flex: 1;
+  justify-content: center;
+}
+.fila-aportar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+  margin-top: 0;
+}
+.fila-aportar label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.fila-aportar label .suave {
+  font-size: 0.8125rem;
+}
+.importe-pequeno {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+  flex-shrink: 0;
+}
+.importe-pequeno input {
+  width: 7.5em;
+  min-height: 48px;
+  padding: 0 var(--esp-3);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--superficie);
+  font-size: 1.0625rem;
+  text-align: right;
+}
+.hoja-cuerpo > .dos-botones {
+  margin-top: var(--esp-4);
+}
+.cristal > .campo {
+  margin-top: var(--esp-4);
+}
+#form-inversion + .vacio {
+  margin-top: var(--esp-4);
+  padding: var(--esp-4) 0 0;
+  border-top: 1px solid var(--cristal-linea);
 }

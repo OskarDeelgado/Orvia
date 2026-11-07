@@ -3,106 +3,50 @@
 // traspaso al ahorro, anillos de los sobres, Extraordinarios y los movimientos del mes.
 
 import { escapar, aviso } from '../../core/ui/componentes.js';
-import { leerLibro } from './motor.js';
 import { eliminarMovimiento } from './datos.js';
 import { abrirHojaGasto } from './hoja.js';
-import { movimientosDelMes, euros, nombreMes, etiquetaDia, hoy } from './calculo.js';
+import { movimientosDelMes, euros, nombreMes, etiquetaDia } from './calculo.js';
+import { montarVista, cabeceraMes, cifraGrande, avisarCambio } from './vista.js';
 
-const ICONO_ANTERIOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
-const ICONO_SIGUIENTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+export { fechaPropuesta } from './vista.js';
+
 const ICONO_ESTADO = { bien: '✓', atencion: '⚠', mal: '▲' };
-
-// Mes que se está viendo (índice desde el inicio) y la fecha de inicio, compartidos
-// con el botón + para proponer la fecha como hace Sobrea.
-let kVisto = null;
-let motorActual = null;
-let vistaActual = null;
 let ultimoQueda = null;
 
-/** Fecha que propone el botón +: hoy si se ve el mes actual; si no, el día 1 del mes visto. */
-export function fechaPropuesta() {
-  if (!motorActual || kVisto == null || !vistaActual?.isConnected) return null;
-  return kVisto === motorActual.kHoy() ? hoy() : motorActual.mesK(kVisto);
-}
-
-/** Cifra grande con los céntimos pequeños, como en Sobrea. */
-export function cifraGrande(v) {
-  const c = Math.round(Math.abs(v) * 100);
-  const entero = String(Math.floor(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  const resto = c % 100;
-  return `${v < 0 && c > 0 ? '−' : ''}${entero}${resto ? `<span class="menor">,${String(resto).padStart(2, '0')}</span>` : ''}<span class="menor"> €</span>`;
-}
-
-export async function montarMes(contenedor) {
-  contenedor.innerHTML = '<p class="suave">Cargando el mes…</p>';
-  let motor;
-  try {
-    motor = await leerLibro();
-  } catch (e) {
-    contenedor.innerHTML = `<p class="error">${escapar(e.message)}</p>`;
-    return;
-  }
-  if (!motor) return;
-  motorActual = motor;
-  vistaActual = contenedor;
-  if (kVisto == null) kVisto = motor.kInicial();
-
-  pintar(contenedor, motor);
-
-  contenedor.onclick = async (e) => {
-    const paso = e.target.closest('[data-paso]');
-    if (paso) {
-      kVisto = Math.max(0, kVisto + Number(paso.dataset.paso));
-      pintar(contenedor, motor);
-      return;
-    }
-    const borrar = e.target.closest('[data-borrar]');
-    if (borrar) {
-      const mov = motor.libro.movimientos.find((m) => m.id === borrar.dataset.borrar);
-      borrar.disabled = true;
-      try {
-        await eliminarMovimiento(mov.id);
-        aviso(mov.meses > 1 ? 'Movimiento y sus cuotas eliminados' : 'Movimiento eliminado');
-        dispatchEvent(new CustomEvent('orvia:finanzas'));
-      } catch (err) {
-        aviso(err.message, { error: true });
-        borrar.disabled = false;
+export function montarMes(contenedor) {
+  return montarVista(contenedor, {
+    pintar,
+    async alClic(e, { motor }) {
+      const borrar = e.target.closest('[data-borrar]');
+      if (borrar) {
+        const mov = motor.libro.movimientos.find((m) => m.id === borrar.dataset.borrar);
+        borrar.disabled = true;
+        try {
+          await eliminarMovimiento(mov.id);
+          aviso(mov.meses > 1 ? 'Movimiento y sus cuotas eliminados' : 'Movimiento eliminado');
+          avisarCambio();
+        } catch (err) {
+          aviso(err.message, { error: true });
+          borrar.disabled = false;
+        }
+        return;
       }
-      return;
-    }
-    const fila = e.target.closest('[data-mov]');
-    if (fila) {
-      const mov = motor.libro.movimientos.find((m) => m.id === fila.dataset.mov);
-      if (mov) abrirHojaGasto({ movimiento: mov });
-    }
-  };
-
-  // Al apuntar, editar o borrar desde cualquier sitio, se recalcula todo.
-  const alCambiar = async () => {
-    if (!contenedor.isConnected) return removeEventListener('orvia:finanzas', alCambiar);
-    try {
-      motor = await leerLibro();
-      motorActual = motor;
-      pintar(contenedor, motor);
-    } catch (err) {
-      aviso(err.message, { error: true });
-    }
-  };
-  addEventListener('orvia:finanzas', alCambiar);
+      const fila = e.target.closest('[data-mov]');
+      if (fila) {
+        const mov = motor.libro.movimientos.find((m) => m.id === fila.dataset.mov);
+        if (mov) abrirHojaGasto({ movimiento: mov });
+      }
+    },
+  });
 }
 
-function pintar(contenedor, motor) {
-  const r = motor.resumenMes(kVisto);
-  const titulo = nombreMes(r.mes).replace(/^./, (c) => c.toUpperCase());
+function pintar(contenedor, motor, k) {
+  const r = motor.resumenMes(k);
   const negativo = r.queda < -0.004;
   const pct = Math.round(r.fraccionGastada * 100);
 
   contenedor.innerHTML = `
-    <div class="selector-mes">
-      <button class="boton-icono" type="button" data-paso="-1" aria-label="Mes anterior" ${kVisto < 1 ? 'disabled' : ''}>${ICONO_ANTERIOR}</button>
-      <h2 aria-live="polite">${escapar(titulo)}</h2>
-      <button class="boton-icono" type="button" data-paso="1" aria-label="Mes siguiente">${ICONO_SIGUIENTE}</button>
-    </div>
+    ${cabeceraMes(motor, k)}
 
     <section class="cristal heroe-mes estado-${r.estado.tipo}" aria-labelledby="t-queda">
       <h2 id="t-queda" class="heroe-titulo">Te queda para gastar en ${escapar(nombreMes(r.mes, { anio: false }))}</h2>

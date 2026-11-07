@@ -2,13 +2,18 @@ import { escapar, aviso } from '../../core/ui/componentes.js';
 import { listar } from '../../core/db.js';
 import { montarConfiguracion } from './configuracion.js';
 import { montarMes, fechaPropuesta } from './mes.js';
+import { montarSobrante } from './sobrante.js';
+import { montarAhorro } from './ahorro.js';
+import { revisarCierres } from './objetivos.js';
 import { generarRecurrentes } from './datos.js';
 
-// Pestañas de Finanzas, en el orden de Sobrea. Inicio, Sobrante, Ahorro y Análisis
-// llegan en los bloques 4 y 5; Configuración pasará a ser Ajustes en el bloque 6.
+// Pestañas de Finanzas, en el orden de Sobrea. Inicio y Análisis llegan en el
+// bloque 5; los Ajustes completos (como los de Sobrea), en el bloque 6.
 const PESTANAS = [
   { id: 'mes', nombre: 'Mes', montar: montarMes },
-  { id: 'configuracion', nombre: 'Configuración', montar: montarConfiguracion },
+  { id: 'sobrante', nombre: 'Sobrante', montar: montarSobrante },
+  { id: 'ahorro', nombre: 'Ahorro', montar: montarAhorro },
+  { id: 'configuracion', nombre: 'Ajustes', montar: montarConfiguracion },
 ];
 let pestanaActual = 'mes';
 
@@ -64,6 +69,7 @@ export default {
       panel.replaceWith(nuevo);
       panel = nuevo;
       panel.setAttribute('aria-labelledby', `pestana-${id}`);
+      contenedor.querySelector(`[data-pestana="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       PESTANAS.find((p) => p.id === id).montar(panel);
     };
     contenedor.querySelector('.pestanas').addEventListener('click', (e) => {
@@ -71,5 +77,8 @@ export default {
       if (b && b.dataset.pestana !== pestanaActual) mostrar(b.dataset.pestana);
     });
     mostrar(pestanaActual);
+
+    // Como Sobrea: si algún objetivo tiene un mes terminado sin cerrar, lo pregunta.
+    setTimeout(revisarCierres, 500);
   },
 };

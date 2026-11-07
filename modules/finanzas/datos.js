@@ -140,3 +140,60 @@ export async function generarRecurrentes() {
   }
   return creados;
 }
+
+// ---------- Objetivos de ahorro ----------
+
+/** Crea un objetivo de ahorro (vive en la tabla común de objetivos, área Finanzas). */
+export async function crearObjetivo({ titulo, meta, desde, hasta }) {
+  const [area] = await listar('areas', { filtros: { nombre: 'Finanzas' } });
+  return crear('objetivos', {
+    titulo, valor_meta: meta, fecha_inicio: desde, fecha_limite: ultimoDia(hasta),
+    metrica: 'dinero', horizonte: 'anio', estado: 'activo', area_id: area?.id || null,
+  });
+}
+
+export function actualizarObjetivo(id, { titulo, meta, hasta }) {
+  return actualizar('objetivos', id, { titulo, valor_meta: meta, fecha_limite: ultimoDia(hasta) });
+}
+
+/** Marca hasta qué mes se ha hecho el cierre del objetivo (aportando u omitiendo). */
+export function marcarRevisado(id, mes) {
+  return actualizar('objetivos', id, { revisado_hasta: mes });
+}
+
+/** Elimina el objetivo y sus aportaciones: el dinero vuelve al Sobrante. */
+export async function eliminarObjetivo(id) {
+  const aportaciones = await listar('fin_aportaciones', { filtros: { objetivo_id: id } });
+  for (const a of aportaciones) await archivar('fin_aportaciones', a.id);
+  return archivar('objetivos', id);
+}
+
+export function aportar({ objetivo_id, mes, importe }) {
+  return crear('fin_aportaciones', { objetivo_id, mes, importe, sobre_id: null });
+}
+
+export function deshacerAportacion(id) {
+  return archivar('fin_aportaciones', id);
+}
+
+// ---------- Inversiones ----------
+
+/** Crea o cambia un movimiento de inversión (importe positivo = invertir, negativo = retirar). */
+export function guardarInversion({ id, fecha, importe }) {
+  return id ? actualizar('fin_inversiones', id, { fecha, importe }) : crear('fin_inversiones', { fecha, importe, nota: '' });
+}
+
+export function eliminarInversion(id) {
+  return archivar('fin_inversiones', id);
+}
+
+/** Valor actual de la cartera (lo indicas tú; se usa en el mes en curso). */
+export async function guardarValorCartera(valor) {
+  const [config] = await listar('fin_config');
+  return actualizar('fin_config', config.id, { inversion_valor: valor });
+}
+
+function ultimoDia(mes) {
+  const d = new Date(Date.UTC(+mes.slice(0, 4), +mes.slice(5, 7), 0));
+  return d.toISOString().slice(0, 10);
+}
