@@ -235,6 +235,7 @@ export function crearMotor(libro) {
     const out = [];
     for (const s of vivos) {
       if ((s.desde_mes ? kDe(s.desde_mes) : 0) > k0) continue;
+      if (s.sugerencia_ignorada && kDe(s.sugerencia_ignorada) === c) continue; // "Ignorar este mes"
       const S = meses.reduce((a, k) => a + gastado(s, k), 0);
       if (!(S > 0)) continue;
       const actual = ultimoPorcentaje(s), real = S / I;
@@ -267,7 +268,7 @@ export function crearMotor(libro) {
     const p = cierrePendiente();
     if (p) av.push({ tipo: 'info', icono: '↗', texto: `Decide cuánto aportas a ${p.g.o.titulo} (cierre de ${nombreMesK(p.k)})`, accion: { etiqueta: 'Decidir aportación', cierre: `${p.g.o.id}:${p.k}` } });
     const n = sugerencias().length;
-    if (n) av.push({ tipo: 'info', icono: '%', texto: `${n} ${n === 1 ? 'sugerencia' : 'sugerencias'} de reajuste de porcentajes`, accion: { etiqueta: 'Revisar en Ajustes', pestana: 'configuracion' } });
+    if (n) av.push({ tipo: 'info', icono: '%', texto: `${n} ${n === 1 ? 'sugerencia' : 'sugerencias'} de reajuste de porcentajes`, accion: { etiqueta: 'Revisar en Ajustes', pestana: 'ajustes' } });
     for (const { r, fecha } of proximosCobros()) {
       av.push({ tipo: 'info', icono: '↻', texto: `Próximo cobro: ${r.concepto}, ${euros(numero(r.importe))} el ${fecha.slice(8)}/${fecha.slice(5, 7)}` });
     }

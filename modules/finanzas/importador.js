@@ -9,8 +9,8 @@
 
 const ANIO_BASE = 2027;
 // Los ocho colores de categoría de Sobrea (tema oscuro), en el mismo orden.
-const COLORES = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
-const COLOR_FONDO = '#9aa1ad';
+export const COLORES = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+export const COLOR_FONDO = '#9aa1ad';
 const UNIDADES = { d: 'dia', w: 'semana', m: 'mes' };
 
 const nuevoId = () => crypto.randomUUID();

@@ -5,7 +5,7 @@ import { aviso } from '../../core/ui/componentes.js';
 import { euros, mesDe, nombreMes, movimientosDelMes } from './calculo.js';
 
 const cargadas = {};
-function cargarScript(ruta, global) {
+export function cargarScript(ruta, global) {
   if (window[global]) return Promise.resolve(window[global]);
   cargadas[ruta] ||= new Promise((ok, mal) => {
     const s = document.createElement('script');
@@ -18,7 +18,7 @@ function cargarScript(ruta, global) {
 }
 
 /** Guarda o comparte el archivo (en el iPhone abre el menú de compartir, como Sobrea). */
-async function entregar(nombre, datos, tipo) {
+export async function entregar(nombre, datos, tipo) {
   const archivo = new File([datos], nombre, { type: tipo });
   if (navigator.canShare?.({ files: [archivo] })) {
     try { await navigator.share({ files: [archivo] }); return; } catch (e) { if (e?.name === 'AbortError') return; }

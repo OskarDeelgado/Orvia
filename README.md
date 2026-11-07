@@ -26,7 +26,9 @@ modules/
   finanzas/ accion/ cerebro/
 supabase/
   001_nucleo.sql      tablas del núcleo y seguridad por fila
-vendor/               supabase-js, three.js (3D) y la fuente Manrope, servidos localmente
+  002_finanzas.sql    tablas de Finanzas, importar y reiniciar
+  003_finanzas_ajustes.sql  sugerencias ignoradas y "Borrar todos los movimientos"
+vendor/               supabase-js, three.js (3D), jsPDF, SheetJS y la fuente Manrope, servidos localmente
 ```
 
 ## Reglas

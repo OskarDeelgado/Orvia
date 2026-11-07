@@ -5,19 +5,19 @@ import { montarMes, fechaPropuesta } from './mes.js';
 import { montarInicio } from './inicio.js';
 import { montarAnalisis } from './analisis.js';
 import { montarSobrante } from './sobrante.js';
+import { montarAjustes } from './ajustes.js';
 import { montarAhorro } from './ahorro.js';
 import { revisarCierres } from './objetivos.js';
 import { generarRecurrentes } from './datos.js';
 
-// Pestañas de Finanzas, en el orden de Sobrea. Los Ajustes completos (como los de
-// Sobrea) llegan en el bloque 6.
+// Pestañas de Finanzas, en el orden de Sobrea.
 const PESTANAS = [
   { id: 'inicio', nombre: 'Inicio', montar: montarInicio },
   { id: 'mes', nombre: 'Mes', montar: montarMes },
   { id: 'sobrante', nombre: 'Sobrante', montar: montarSobrante },
   { id: 'ahorro', nombre: 'Ahorro', montar: montarAhorro },
   { id: 'analisis', nombre: 'Análisis', montar: montarAnalisis },
-  { id: 'configuracion', nombre: 'Ajustes', montar: montarConfiguracion },
+  { id: 'ajustes', nombre: 'Ajustes', montar: montarAjustes },
 ];
 let pestanaActual = 'inicio';
 
