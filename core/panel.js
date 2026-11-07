@@ -25,9 +25,29 @@ function mesActual() {
   return new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
 }
 
-// Datos clave. Se rellenarán cuando existan Finanzas y Acción.
-function datosClave() {
-  return { queda: '—', patrimonio: '—', tareas: 'Llegan con Acción' };
+// Datos clave. Lo que te queda y el patrimonio salen del motor de Finanzas (las
+// mismas cuentas que la pestaña Mes); las tareas llegarán con Acción.
+const SIN_DATOS = { queda: '—', patrimonio: '—', tareas: 'Llegan con Acción', mes: null, hayFinanzas: false };
+async function leerDatosClave() {
+  try {
+    const { leerLibro } = await import('../modules/finanzas/motor.js');
+    const { euros, nombreMes } = await import('../modules/finanzas/calculo.js');
+    const motor = await leerLibro();
+    if (!motor) return SIN_DATOS;
+    const k = motor.kInicial();
+    const r = motor.resumenMes(k);
+    const mes = nombreMes(r.mes, { anio: false });
+    return {
+      ...SIN_DATOS,
+      queda: euros(r.queda),
+      patrimonio: euros(motor.patrimonio(k).total),
+      mes,
+      etiquetaQueda: `Te quedan en ${mes}`,
+      hayFinanzas: true,
+    };
+  } catch {
+    return SIN_DATOS;
+  }
 }
 
 function cabecera(nombre) {
@@ -63,7 +83,7 @@ function fichaAgente(m, { comoEnlace }) {
 
 /** Panel ligero del móvil. */
 function pintarPanelMovil(raiz, { nombre }) {
-  const d = datosClave();
+  const d = SIN_DATOS;
   raiz.innerHTML = `
     <main class="panel volviendo">
       ${cabecera(nombre)}
@@ -71,10 +91,10 @@ function pintarPanelMovil(raiz, { nombre }) {
       <section class="bloque despacho" aria-labelledby="t-despacho">
         <h2 id="t-despacho">Tu despacho</h2>
         <div class="datos-clave">
-          <div class="dato"><span class="etiqueta">Te quedan en ${mesActual()}</span><span class="cifra">${d.queda}</span></div>
-          <div class="dato"><span class="etiqueta">Patrimonio</span><span class="cifra">${d.patrimonio}</span></div>
+          <a class="dato" href="#/finanzas"><span class="etiqueta" id="dc-etiqueta">Te quedan en ${mesActual()}</span><span class="cifra" id="dc-queda">${d.queda}</span></a>
+          <a class="dato" href="#/finanzas"><span class="etiqueta">Patrimonio</span><span class="cifra" id="dc-patrimonio">${d.patrimonio}</span></a>
         </div>
-        <p class="nota-despacho">Hoy: ${escapar(d.tareas)}. Las cifras aparecerán cuando esté Finanzas.</p>
+        <p class="nota-despacho" id="dc-nota">Hoy: ${escapar(d.tareas)}.</p>
       </section>
 
       <section aria-labelledby="t-equipo">
@@ -84,6 +104,13 @@ function pintarPanelMovil(raiz, { nombre }) {
 
       <a class="boton secundario ancho" href="#/oficina">Ver la oficina en 3D</a>
     </main>`;
+  leerDatosClave().then((datos) => {
+    if (!raiz.isConnected || !raiz.querySelector('#dc-queda')) return;
+    raiz.querySelector('#dc-queda').textContent = datos.queda;
+    raiz.querySelector('#dc-patrimonio').textContent = datos.patrimonio;
+    if (datos.mes) raiz.querySelector('#dc-etiqueta').textContent = datos.etiquetaQueda;
+    if (!datos.hayFinanzas) raiz.querySelector('#dc-nota').textContent = `Hoy: ${datos.tareas}. Las cifras aparecerán cuando pongas en marcha Finanzas.`;
+  });
   return () => {};
 }
 
@@ -127,10 +154,11 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
   });
 
   import('./oficina.js')
-    .then(({ montarOficina }) => montarOficina(escena, { modulos: MODULOS, nombreUsuario: nombre, datos: datosClave(), alAbrirModulo }))
+    .then(({ montarOficina }) => montarOficina(escena, { modulos: MODULOS, nombreUsuario: nombre, datos: { ...SIN_DATOS }, alAbrirModulo }))
     .then((o) => {
-      if (cancelado) o.destruir();
-      else oficina = o;
+      if (cancelado) return o.destruir();
+      oficina = o;
+      leerDatosClave().then((datos) => { if (!cancelado) o.actualizarDatos(datos); });
     })
     .catch((e) => {
       console.error(e);

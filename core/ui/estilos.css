@@ -970,7 +970,7 @@ textarea {
   padding: var(--esp-1) 0;
   list-style: none;
 }
-.lista-movs li + li .mov {
+.lista-movs li + li {
   border-top: 1px solid var(--cristal-linea);
 }
 .mov {
@@ -1012,6 +1012,199 @@ textarea {
 .mov-importe {
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* La fila lleva el movimiento (se toca para editar) y la ✕ para borrarlo al momento. */
+.mov-fila {
+  display: flex;
+  align-items: center;
+}
+.mov-fila .mov {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--esp-2);
+}
+.mov-borrar,
+.mov-hueco {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin-right: var(--esp-1);
+}
+.mov-borrar {
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--tinta-apagada);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.mov-borrar:hover {
+  color: var(--peligro);
+  background: var(--cristal);
+}
+.mov-nota {
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+.mov-importe.ingreso {
+  color: var(--exito);
+}
+.dia-titulo {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--esp-3);
+}
+
+/* ---------- Pestaña Mes ---------- */
+.seccion-movs {
+  margin-top: var(--esp-5);
+}
+.menor {
+  font-size: 0.55em;
+  font-weight: 400;
+}
+.heroe-mes {
+  text-align: center;
+}
+.heroe-titulo {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+.heroe-cifra {
+  margin: var(--esp-2) 0 var(--esp-4);
+  font-size: clamp(2.75rem, 12vw, 3.75rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.heroe-cifra.negativa {
+  color: var(--peligro);
+}
+.barra-mes {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+}
+.barra-mes .relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mundo-acento), var(--mundo-claro));
+  transition: width 0.5s ease;
+}
+.estado-atencion .barra-mes .relleno {
+  background: var(--alerta);
+}
+.estado-mal .barra-mes .relleno {
+  background: var(--peligro);
+}
+.barra-mes .marca-dia {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--tinta);
+}
+.heroe-estado {
+  margin-top: var(--esp-4);
+  font-weight: 600;
+}
+.estado-bien .heroe-estado span {
+  color: var(--exito);
+}
+.estado-atencion .heroe-estado span {
+  color: var(--alerta);
+}
+.estado-mal .heroe-estado span {
+  color: var(--peligro);
+}
+.heroe-pie {
+  margin-top: var(--esp-1);
+  font-size: 0.8125rem;
+  color: var(--tinta-suave);
+}
+.tres-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--esp-3);
+  text-align: center;
+}
+.tres-datos > div {
+  display: grid;
+  gap: var(--esp-1);
+  min-width: 0;
+}
+.tres-datos .etiqueta {
+  font-size: 0.75rem;
+  color: var(--tinta-suave);
+}
+.tres-datos .cifra {
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.anillos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--esp-4) var(--esp-3);
+  margin: var(--esp-3) 0 var(--esp-4);
+}
+.anillo {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  min-width: 0;
+}
+.anillo svg {
+  width: 88px;
+  height: 88px;
+  margin-bottom: var(--esp-1);
+}
+.anillo-pista {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.08);
+  stroke-width: 9;
+}
+.anillo-avance {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 9;
+}
+.anillo-exceso {
+  fill: none;
+  stroke: var(--peligro);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+}
+.anillo text {
+  fill: var(--tinta);
+  font: 700 17px var(--fuente);
+}
+.anillo-nombre {
+  font-size: 0.875rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.anillo-quedan,
+.anillo-estado {
+  font-size: 0.75rem;
+}
+.anillo-estado.mal {
+  color: var(--peligro);
+}
+.anillo-estado.atencion {
+  color: var(--alerta);
 }
 
 /* ---------- Panel inferior (apuntar gasto) ---------- */

@@ -188,7 +188,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
       ctx.font = '800 34px Manrope, system-ui, sans-serif';
       ctx.fillText('Orvia · hoy', 40, 62);
       const filas = [
-        ['Te quedan este mes', datos.queda, '#818cf8'],
+        [datos.etiquetaQueda || 'Te quedan este mes', datos.queda, '#818cf8'],
         ['Patrimonio', datos.patrimonio, '#8ab4ff'],
         ['Tareas de hoy', datos.tareas, '#4ade80'],
       ];
@@ -639,6 +639,11 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   return {
     entrar,
     verOficina,
+    /** Cambia los datos clave de la pantalla de tu despacho (llegan después de montar). */
+    actualizarDatos(nuevos) {
+      Object.assign(datos, nuevos);
+      for (const p of pantallas) if (p.tipo === 'datos') pintarPantalla(p);
+    },
     destruir() {
       cancelAnimationFrame(marco);
       marco = 0;

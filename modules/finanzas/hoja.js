@@ -28,7 +28,7 @@ export async function abrirHojaGasto({ movimiento = null, fecha = null } = {}) {
     <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-titulo">
       <div class="hoja-asa" aria-hidden="true"></div>
       <header class="hoja-cabecera">
-        <h2 id="hoja-titulo">${movimiento ? 'Editar gasto' : 'Nuevo gasto'}</h2>
+        <h2 id="hoja-titulo">${movimiento ? 'Editar movimiento' : 'Nuevo movimiento'}</h2>
         <button class="boton-icono" type="button" data-cerrar aria-label="Cerrar">✕</button>
       </header>
       <div class="hoja-cuerpo"><p class="suave">Cargando…</p></div>
@@ -65,7 +65,10 @@ export async function abrirHojaGasto({ movimiento = null, fecha = null } = {}) {
       <div class="acciones"><a class="boton" href="#/finanzas" data-cerrar>Ir a Finanzas</a></div>`;
     return;
   }
-  pintarFormulario(cuerpo, catalogo, { movimiento, fecha: movimiento?.fecha || fecha || hoy(), cerrar });
+  // Sin fecha propuesta: hoy o, si Finanzas aún no ha empezado, el día de inicio (como Sobrea).
+  const inicio = catalogo.config.fecha_inicio;
+  const porDefecto = hoy() < inicio ? inicio : hoy();
+  pintarFormulario(cuerpo, catalogo, { movimiento, fecha: movimiento?.fecha || fecha || porDefecto, cerrar });
 }
 
 export function cerrarHojaGasto() {
@@ -125,8 +128,8 @@ function pintarFormulario(cuerpo, catalogo, { movimiento, fecha, cerrar }) {
       ${movimiento?.recurrente_id ? '<p class="ayuda">Este gasto viene de un recurrente. Lo que cambies aquí solo afecta a este movimiento.</p>' : ''}
 
       <p class="error" id="gasto-error" role="alert" hidden></p>
-      <button class="boton ancho" type="submit" id="gasto-guardar">${editando ? 'Guardar cambios' : 'Apuntar gasto'}</button>
-      ${editando ? '<button class="boton peligro ancho" type="button" id="gasto-eliminar">Eliminar gasto</button>' : ''}
+      <button class="boton ancho" type="submit" id="gasto-guardar">${editando ? 'Guardar cambios' : 'Apuntar'}</button>
+      ${editando ? '<button class="boton peligro ancho" type="button" id="gasto-eliminar">Eliminar movimiento</button>' : ''}
     </form>`;
 
   const $ = (sel) => cuerpo.querySelector(sel);
@@ -143,7 +146,7 @@ function pintarFormulario(cuerpo, catalogo, { movimiento, fecha, cerrar }) {
     }
     $('#gasto-sobres').innerHTML = lista.map((s) => `
       <button type="button" class="segmento" data-sobre="${s.id}" aria-pressed="${s.id === estado.sobre}">
-        <span class="punto" style="--c:${s.color}"></span>${escapar(s.nombre)}
+        <span class="punto" style="--c:${s.color}"></span>${s.tipo === 'ingreso' ? '＋ ' : ''}${escapar(s.nombre)}
       </button>`).join('');
     pintarConceptos();
     pintarExtras();
@@ -155,7 +158,7 @@ function pintarFormulario(cuerpo, catalogo, { movimiento, fecha, cerrar }) {
       ? conceptos.map((c) => `<button type="button" class="chip-opcion" data-concepto="${escapar(c)}" aria-pressed="${c === estado.concepto}">${escapar(c)}</button>`).join('')
       : '<span class="ayuda">Este sobre no tiene conceptos. Podrás añadirlos en los ajustes de Finanzas.</span>';
   }
-  // Repartir y repetir solo tienen sentido en sobres de gasto (no en Extraordinarios).
+  // Repartir y repetir solo tienen sentido en sobres de gasto (no en Extraordinarios ni en ingresos).
   function pintarExtras() {
     const esGasto = catalogo.porId[estado.sobre]?.tipo === 'gasto';
     $('#gasto-extras').hidden = !esGasto;
@@ -254,14 +257,15 @@ function pintarFormulario(cuerpo, catalogo, { movimiento, fecha, cerrar }) {
         aviso(`Gasto recurrente creado: ${euros(importe)} ${frecuencia({ cada, unidad: $('#gasto-unidad').value })}`);
       } else {
         await guardarMovimiento({ id: movimiento?.id, ...datos });
-        aviso(movimiento ? 'Cambios guardados' : `Gasto apuntado: ${euros(importe)}`);
+        const esIngreso = catalogo.porId[estado.sobre]?.tipo === 'ingreso';
+        aviso(movimiento ? 'Cambios guardados' : `${esIngreso ? 'Ingreso' : 'Gasto'} apuntado: ${euros(importe)}`);
       }
       avisarCambio();
       cerrar();
     } catch (e) {
       mostrarError(e.message);
       boton.disabled = false;
-      boton.textContent = editando ? 'Guardar cambios' : 'Apuntar gasto';
+      boton.textContent = editando ? 'Guardar cambios' : 'Apuntar';
     }
   });
 
@@ -276,7 +280,7 @@ function pintarFormulario(cuerpo, catalogo, { movimiento, fecha, cerrar }) {
     botonEliminar.disabled = true;
     try {
       await eliminarMovimiento(movimiento.id);
-      aviso('Gasto eliminado');
+      aviso(movimiento.meses > 1 ? 'Movimiento y sus cuotas eliminados' : 'Movimiento eliminado');
       avisarCambio();
       cerrar();
     } catch (e) {

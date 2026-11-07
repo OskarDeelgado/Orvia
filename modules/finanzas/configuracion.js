@@ -58,7 +58,7 @@ function pintarBienvenida(contenedor) {
         </label>
         <button class="opcion-arranque" type="button" id="empezar-basica">
           <span class="opcion-icono">+</span>
-          <span><strong>Empezar con la configuración básica</strong><span class="suave">Gastos fijos, Compras, Ocio y Extraordinarios, con los conceptos de Sobrea. El sueldo lo pondrás después.</span></span>
+          <span><strong>Empezar con la configuración básica</strong><span class="suave">Gastos fijos, Compras, Ocio, Extraordinarios e Ingresos extra, con los conceptos de Sobrea. El sueldo lo pondrás después.</span></span>
         </button>
       </div>
       <p class="nota-pequena">La copia de Sobrea se descarga en Sobrea, en Ajustes → Copia de seguridad → Descargar copia de seguridad.</p>

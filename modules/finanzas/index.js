@@ -1,15 +1,16 @@
 import { escapar, aviso } from '../../core/ui/componentes.js';
 import { listar } from '../../core/db.js';
 import { montarConfiguracion } from './configuracion.js';
-import { montarMovimientos } from './movimientos.js';
+import { montarMes, fechaPropuesta } from './mes.js';
 import { generarRecurrentes } from './datos.js';
 
-// Pestañas de Finanzas. La pestaña Mes llega en el bloque 3.
+// Pestañas de Finanzas, en el orden de Sobrea. Inicio, Sobrante, Ahorro y Análisis
+// llegan en los bloques 4 y 5; Configuración pasará a ser Ajustes en el bloque 6.
 const PESTANAS = [
-  { id: 'movimientos', nombre: 'Movimientos', montar: montarMovimientos },
+  { id: 'mes', nombre: 'Mes', montar: montarMes },
   { id: 'configuracion', nombre: 'Configuración', montar: montarConfiguracion },
 ];
-let pestanaActual = 'movimientos';
+let pestanaActual = 'mes';
 
 export default {
   id: 'finanzas',
@@ -26,8 +27,9 @@ export default {
   },
   // Lo que hace el botón + desde cualquier pantalla de Orvia.
   accionRapida: {
-    etiqueta: 'Apuntar un gasto',
-    ejecutar: () => import('./hoja.js').then((h) => h.abrirHojaGasto()),
+    etiqueta: 'Apuntar un movimiento',
+    // Como en Sobrea: si estás viendo un mes, propone su fecha (hoy si es el actual).
+    ejecutar: () => import('./hoja.js').then((h) => h.abrirHojaGasto({ fecha: fechaPropuesta() })),
   },
 
   async montar(contenedor) {
@@ -53,10 +55,14 @@ export default {
         ${PESTANAS.map((p) => `<button role="tab" type="button" id="pestana-${p.id}" data-pestana="${p.id}" aria-selected="${p.id === pestanaActual}" aria-controls="panel-finanzas">${escapar(p.nombre)}</button>`).join('')}
       </div>
       <div id="panel-finanzas" role="tabpanel" aria-labelledby="pestana-${pestanaActual}"></div>`;
-    const panel = contenedor.querySelector('#panel-finanzas');
+    let panel = contenedor.querySelector('#panel-finanzas');
     const mostrar = (id) => {
       pestanaActual = id;
       contenedor.querySelectorAll('[data-pestana]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.pestana === id)));
+      // Cada pestaña recibe un contenedor nuevo, así lo que escuchaba la anterior se suelta.
+      const nuevo = panel.cloneNode(false);
+      panel.replaceWith(nuevo);
+      panel = nuevo;
       panel.setAttribute('aria-labelledby', `pestana-${id}`);
       PESTANAS.find((p) => p.id === id).montar(panel);
     };

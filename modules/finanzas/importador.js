@@ -5,7 +5,7 @@
 // Equivalencias con Sobrea:
 // - Sobrea cuenta los meses desde enero de 2027 (mes 0). Aquí cada mes es una fecha: 2027-01-01.
 // - Extraordinarios (clave X) es el sobre de tipo 'fondo'.
-// - Las categorías de ingreso (ty 'i') se importan como sobres de tipo 'ingreso' (ocultos por ahora).
+// - Las categorías de ingreso (ty 'i') se importan como sobres de tipo 'ingreso' (Ingresos extra: suman a lo que te queda en el mes).
 
 const ANIO_BASE = 2027;
 // Los ocho colores de categoría de Sobrea (tema oscuro), en el mismo orden.
@@ -199,6 +199,7 @@ export function configuracionBasica() {
         { k: 'F', n: 'Gastos fijos', p: 0.075, ph: [], f: 0, t: null, col: 0, c: ['Comida Puleva', 'Peluquería', 'Gasolina', 'Café', 'Regalo', 'Gimnasio', 'Biwenguer', 'Hucha'] },
         { k: 'C', n: 'Compras', p: 0.09, ph: [], f: 0, t: null, col: 1, c: ['Ropa', 'Tecnología', 'Hogar', 'Regalos', 'Otros'] },
         { k: 'O', n: 'Ocio', p: 0.135, ph: [], f: 0, t: null, col: 2, c: ['Desayuno', 'Almuerzo', 'Merienda', 'Cena', 'Copas', 'Eventos', 'Otros'] },
+        { k: 'I', n: 'Ingresos extra', ty: 'i', p: 0, ph: [], f: 0, t: null, col: 3, c: ['Venta', 'Regalo', 'Devolución', 'Otros'] },
       ],
       cats: { X: ['Salud', 'Coche', 'Imprevistos', 'Otros'] },
     },

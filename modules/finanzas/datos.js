@@ -69,16 +69,15 @@ export async function leerCatalogo() {
     listar('fin_sobres', { orden: 'orden' }),
     listar('fin_conceptos', { orden: 'orden' }),
   ]);
-  const visibles = sobres.filter((s) => s.tipo !== 'ingreso');
   return {
     config,
-    sobres: visibles,
+    sobres,
     porId: Object.fromEntries(sobres.map((s) => [s.id, s])),
     conceptosDe: (sobreId) => conceptos.filter((c) => c.sobre_id === sobreId).map((c) => c.nombre),
   };
 }
 
-/** Sobres en los que se puede apuntar un gasto en un mes (los de gasto activos y Extraordinarios). */
+/** Sobres en los que se puede apuntar en un mes: los de gasto e ingreso activos y Extraordinarios. */
 export function sobresDelMes(catalogo, mes) {
   return catalogo.sobres.filter((s) => s.tipo === 'fondo' || ((!s.desde_mes || s.desde_mes <= mes) && (!s.hasta_mes || s.hasta_mes > mes)));
 }
