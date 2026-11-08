@@ -126,16 +126,21 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
       </span>
     </button>`;
 
+  // La oficina ocupa toda la pantalla; la cabecera y el equipo flotan encima.
   raiz.innerHTML = `
-    <main class="panel-oficina volviendo">
-      ${pantallaCompleta
-        ? `<header class="mundo-cabecera"><a class="volver" href="#/" aria-label="Volver al Panel">${ICONOS.volver}</a><h1>Oficina</h1></header>`
-        : cabecera(nombre)}
+    <main class="panel-oficina completa volviendo">
       <section class="oficina" id="oficina" aria-label="Oficina en 3D"></section>
-      <section aria-labelledby="t-equipo">
-        <h2 id="t-equipo" class="titulo-seccion">Tu equipo</h2>
-        <div class="equipo equipo-fila">${fichaTuya}${MODULOS.map((m) => fichaAgente(m, { comoEnlace: false })).join('')}</div>
-      </section>
+      <header class="oficina-cabecera flotante">
+        ${pantallaCompleta
+          ? `<a class="volver" href="#/" aria-label="Volver al Panel">${ICONOS.volver}</a><h1>Oficina</h1>`
+          : `<span class="marca">${marcaOrvia()}Orvia</span>
+             <div class="panel-saludo"><p>${fechaLarga()}</p><h1>${saludo()}${nombre ? ', ' + escapar(nombre) : ''}</h1></div>
+             <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>`}
+      </header>
+      <aside class="equipo-flotante flotante" aria-labelledby="t-equipo">
+        <h2 id="t-equipo">Tu equipo</h2>
+        <div class="equipo">${fichaTuya}${MODULOS.map((m) => fichaAgente(m, { comoEnlace: false })).join('')}</div>
+      </aside>
     </main>`;
 
   const escena = raiz.querySelector('#oficina');
@@ -147,7 +152,6 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
     const b = ev.target.closest('[data-sala]');
     if (!b || !oficina) return;
     oficina.entrar(b.dataset.sala);
-    escena.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
   });
   escena.addEventListener('sala', (ev) => {
     raiz.querySelectorAll('.equipo [data-sala]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sala === ev.detail)));

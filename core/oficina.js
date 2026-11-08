@@ -574,7 +574,11 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     renderer.setSize(r.width, r.height, false);
     camara.aspect = r.width / r.height;
     const vertical = r.width / r.height < 0.9;
-    camara.fov = vertical ? 48 : 40;
+    camara.fov = vertical ? 48 : r.width >= 900 ? 43 : 40;
+    // En el ordenador el equipo flota a la derecha: la maqueta se centra en el hueco libre.
+    const hueco = !vertical && r.width >= 900 ? 150 : 0;
+    if (hueco) camara.setViewOffset(r.width, r.height, hueco, 0, r.width, r.height);
+    else camara.clearViewOffset();
     camara.updateProjectionMatrix();
     const nueva = vertical ? VISTA_ALTA : VISTA_ANCHA;
     if (nueva !== vistaGeneral) {

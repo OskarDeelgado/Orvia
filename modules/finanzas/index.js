@@ -73,6 +73,7 @@ export default {
       panel.replaceWith(nuevo);
       panel = nuevo;
       panel.setAttribute('aria-labelledby', `pestana-${id}`);
+      panel.dataset.vista = id; // el diseño de ordenador reparte cada pestaña en columnas
       contenedor.querySelector(`[data-pestana="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       PESTANAS.find((p) => p.id === id).montar(panel);
     };

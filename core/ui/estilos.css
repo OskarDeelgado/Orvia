@@ -2184,3 +2184,196 @@ button.an-fila { cursor: pointer; }
 .plantilla-reparto { color: var(--tinta-suave); }
 .plantilla-ahorro { font-size: 0.875rem; }
 .saltar { justify-self: center; color: var(--tinta-suave); }
+
+/* ---------- Oficina a pantalla completa ---------- */
+.panel-oficina.completa {
+  position: fixed;
+  inset: 0;
+  max-width: none;
+  padding: 0;
+  display: block;
+}
+.panel-oficina.completa .oficina {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+}
+.flotante {
+  position: absolute;
+  z-index: 3;
+  border: 1px solid var(--linea);
+  background: rgb(16 18 23 / 0.72);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 0.35);
+}
+.oficina-cabecera {
+  top: calc(env(safe-area-inset-top) + var(--esp-4));
+  left: max(var(--esp-4), env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: var(--esp-4);
+  max-width: calc(100% - 2 * var(--esp-4));
+  padding: var(--esp-3) var(--esp-3) var(--esp-3) var(--esp-4);
+  border-radius: var(--radio-l);
+}
+.oficina-cabecera h1 {
+  font-size: 1.25rem;
+}
+.oficina-cabecera .panel-saludo {
+  padding-left: var(--esp-4);
+  border-left: 1px solid var(--linea);
+}
+.oficina-cabecera .panel-saludo p {
+  font-size: 0.78rem;
+}
+.oficina-cabecera .panel-saludo h1 {
+  margin-top: 0;
+}
+.equipo-flotante {
+  top: calc(env(safe-area-inset-top) + var(--esp-4));
+  right: max(var(--esp-4), env(safe-area-inset-right));
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 120px);
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  padding: var(--esp-4);
+  border-radius: var(--radio-l);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.equipo-flotante h2 {
+  font-size: 0.9375rem;
+  color: var(--tinta-suave);
+  font-weight: 600;
+}
+.equipo-flotante .equipo {
+  grid-template-columns: 1fr;
+  gap: var(--esp-2);
+}
+.equipo-flotante .agente {
+  padding: var(--esp-3);
+  gap: var(--esp-3);
+  background: rgb(255 255 255 / 0.04);
+}
+/* El + flota en el mismo lateral, debajo del equipo */
+.panel-oficina.completa ~ .boton-mas {
+  right: max(var(--esp-4), env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + var(--esp-5));
+}
+/* Lo que la oficina pinta dentro de la escena se aparta de los paneles flotantes */
+.panel-oficina.completa .oficina-volver {
+  top: auto;
+  left: var(--esp-4);
+  bottom: calc(env(safe-area-inset-bottom) + var(--esp-4));
+}
+.panel-oficina.completa .oficina-info {
+  left: var(--esp-4);
+  bottom: calc(env(safe-area-inset-bottom) + 76px);
+}
+.panel-oficina.completa .oficina-pista {
+  bottom: calc(env(safe-area-inset-bottom) + var(--esp-5));
+}
+/* Móvil (la oficina se abre desde "Ver la oficina en 3D"): el equipo, abajo en fila */
+@media (max-width: 899px), (pointer: coarse) {
+  .equipo-flotante {
+    top: auto;
+    left: max(var(--esp-3), env(safe-area-inset-left));
+    right: calc(max(var(--esp-3), env(safe-area-inset-right)) + 72px);
+    bottom: calc(env(safe-area-inset-bottom) + var(--esp-3));
+    width: auto;
+    padding: var(--esp-3);
+    overflow: visible;
+  }
+  .equipo-flotante h2 { display: none; }
+  .equipo-flotante .equipo {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .equipo-flotante .agente { flex: 0 0 220px; }
+  .panel-oficina.completa .oficina-volver { top: calc(env(safe-area-inset-top) + 84px); bottom: auto; }
+  .panel-oficina.completa .oficina-info { bottom: calc(env(safe-area-inset-bottom) + 120px); right: var(--esp-4); }
+  .panel-oficina.completa .oficina-pista { bottom: auto; top: calc(env(safe-area-inset-top) + 84px); }
+}
+
+/* ---------- Finanzas en el ordenador ---------- */
+@media (min-width: 1024px) {
+  [data-mundo='finanzas'] .mundo-contenido {
+    max-width: 1280px;
+    padding-left: var(--esp-6);
+    padding-right: var(--esp-6);
+  }
+  /* El + flota en el lateral, fuera de las tarjetas */
+  [data-mundo='finanzas'] .boton-mas {
+    right: max(var(--esp-4), calc((100vw - 1280px) / 2 - 64px));
+  }
+  /* Pestañas en una barra lateral, como Sobrea en el ordenador */
+  #contenido:has(> .pestanas) {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: var(--esp-5);
+    align-items: start;
+  }
+  #contenido > .pestanas {
+    margin-bottom: 0;
+    position: sticky;
+    top: var(--esp-5);
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--esp-2);
+    border-radius: var(--radio-l);
+    overflow: visible;
+  }
+  #contenido > .pestanas button {
+    flex: none;
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 0 var(--esp-4);
+    text-align: left;
+    font-size: 0.9375rem;
+  }
+  /* Cada pestaña, en dos columnas */
+  #panel-finanzas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--esp-4);
+    align-items: start;
+  }
+  #panel-finanzas > * {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  #panel-finanzas > .cristal + .cristal,
+  #panel-finanzas > * + * {
+    margin-top: 0;
+  }
+  /* Mes: sobres a la izquierda, movimientos a la derecha */
+  #panel-finanzas[data-vista='mes'] > .cristal:not(.heroe-mes):not(.tres-datos) { grid-column: 1; }
+  #panel-finanzas[data-vista='mes'] > .seccion-movs { grid-column: 2; grid-row: span 2; }
+  #panel-finanzas[data-vista='mes'] > .botones-informe { grid-column: 1; grid-template-columns: 1fr 1fr; }
+  #panel-finanzas[data-vista='mes'] .heroe-mes { padding: var(--esp-6); }
+  /* Sobrante y Ahorro: tarjetas en dos columnas */
+  #panel-finanzas[data-vista='sobrante'] > .cristal,
+  #panel-finanzas[data-vista='ahorro'] > .cristal:not(:last-child) { grid-column: auto; }
+  #panel-finanzas[data-vista='sobrante'] { grid-auto-flow: dense; }
+  /* Inicio: la rejilla ya va en columnas; aquí, tres en pantallas grandes */
+  #panel-finanzas[data-vista='inicio'] .heroe-inicio { padding: var(--esp-6); }
+  #panel-finanzas[data-vista='inicio'] .heroe-inicio .heroe-cifra { font-size: 4rem; }
+  #panel-finanzas[data-vista='inicio'] .anillo-grande { width: 150px; height: 150px; }
+  /* Ajustes: apartados en dos columnas */
+  /* Ajustes: dos columnas independientes (al desplegar uno no se estira el de al lado) */
+  #panel-finanzas[data-vista='ajustes'] { display: block; columns: 2; column-gap: var(--esp-4); }
+  #panel-finanzas[data-vista='ajustes'] > * { break-inside: avoid; margin: 0 0 var(--esp-4); }
+  #panel-finanzas[data-vista='ajustes'] > .boton { width: 100%; }
+  /* Mes, Sobrante y Ahorro centran la cabecera del mes en toda la anchura */
+  #panel-finanzas .selector-mes { max-width: 420px; justify-self: center; width: 100%; }
+  #panel-finanzas .anillos { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+@media (min-width: 1360px) {
+  #panel-finanzas[data-vista='inicio'] .rejilla-inicio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #panel-finanzas[data-vista='inicio'] .rejilla-inicio .tarjeta-ancha { grid-column: 1 / -1; }
+}
