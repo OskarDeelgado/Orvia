@@ -2377,3 +2377,74 @@ button.an-fila { cursor: pointer; }
   #panel-finanzas[data-vista='inicio'] .rejilla-inicio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   #panel-finanzas[data-vista='inicio'] .rejilla-inicio .tarjeta-ancha { grid-column: 1 / -1; }
 }
+
+/* ---------- Barra de pestañas de Finanzas abajo, como Sobrea (móvil y tableta) ---------- */
+.pestanas button svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+@media (max-width: 1023px) {
+  .pestanas.barra-inferior {
+    position: fixed;
+    z-index: 14;
+    left: max(var(--esp-3), env(safe-area-inset-left));
+    right: max(var(--esp-3), env(safe-area-inset-right));
+    bottom: calc(env(safe-area-inset-bottom) + var(--esp-2));
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 6px;
+    gap: 2px;
+    border-radius: 26px;
+    border: 1px solid var(--linea);
+    background: rgb(18 22 32 / 0.82);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 12px 34px rgb(0 0 0 / 0.45);
+    overflow: visible;
+  }
+  .pestanas.barra-inferior button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 58px;
+    padding: 6px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+  .pestanas.barra-inferior button span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pestanas.barra-inferior button[aria-selected='true'] {
+    background: rgb(255 255 255 / 0.08);
+    color: var(--mundo-claro);
+    font-weight: 600;
+  }
+  /* Hueco para que la barra no tape el final de la pantalla */
+  #contenido:has(> .barra-inferior) {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
+  }
+  /* El + flota justo encima de la barra */
+  [data-mundo='finanzas']:has(.barra-inferior) .boton-mas {
+    bottom: calc(env(safe-area-inset-bottom) + 92px);
+  }
+}
+/* Ordenador: misma barra, en el lateral, con icono y nombre */
+@media (min-width: 1024px) {
+  #contenido > .pestanas button {
+    display: flex;
+    align-items: center;
+    gap: var(--esp-3);
+  }
+  #contenido > .pestanas button svg {
+    width: 20px;
+    height: 20px;
+  }
+}

@@ -12,12 +12,12 @@ import { generarRecurrentes } from './datos.js';
 
 // Pestañas de Finanzas, en el orden de Sobrea.
 const PESTANAS = [
-  { id: 'inicio', nombre: 'Inicio', montar: montarInicio },
-  { id: 'mes', nombre: 'Mes', montar: montarMes },
-  { id: 'sobrante', nombre: 'Sobrante', montar: montarSobrante },
-  { id: 'ahorro', nombre: 'Ahorro', montar: montarAhorro },
-  { id: 'analisis', nombre: 'Análisis', montar: montarAnalisis },
-  { id: 'ajustes', nombre: 'Ajustes', montar: montarAjustes },
+  { id: 'inicio', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="8" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="14.5" width="7" height="6" rx="2"/></svg>', nombre: 'Inicio', montar: montarInicio },
+  { id: 'mes', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>', nombre: 'Mes', montar: montarMes },
+  { id: 'sobrante', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>', nombre: 'Sobrante', montar: montarSobrante },
+  { id: 'ahorro', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 17l5.5-6 4 3.5 7-8"/><path d="M15 6.5h5.5V12"/></svg>', nombre: 'Ahorro', montar: montarAhorro },
+  { id: 'analisis', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-5"/></svg>', nombre: 'Análisis', montar: montarAnalisis },
+  { id: 'ajustes', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>', nombre: 'Ajustes', montar: montarAjustes },
 ];
 let pestanaActual = 'inicio';
 
@@ -60,8 +60,8 @@ export default {
       .catch(() => {});
 
     contenedor.innerHTML = `
-      <div class="pestanas" role="tablist" aria-label="Secciones de Finanzas">
-        ${PESTANAS.map((p) => `<button role="tab" type="button" id="pestana-${p.id}" data-pestana="${p.id}" aria-selected="${p.id === pestanaActual}" aria-controls="panel-finanzas">${escapar(p.nombre)}</button>`).join('')}
+      <div class="pestanas barra-inferior" role="tablist" aria-label="Secciones de Finanzas">
+        ${PESTANAS.map((p) => `<button role="tab" type="button" id="pestana-${p.id}" data-pestana="${p.id}" aria-selected="${p.id === pestanaActual}" aria-controls="panel-finanzas">${p.icono}<span>${escapar(p.nombre)}</span></button>`).join('')}
       </div>
       <div id="panel-finanzas" role="tabpanel" aria-labelledby="pestana-${pestanaActual}"></div>`;
     let panel = contenedor.querySelector('#panel-finanzas');
@@ -74,7 +74,6 @@ export default {
       panel = nuevo;
       panel.setAttribute('aria-labelledby', `pestana-${id}`);
       panel.dataset.vista = id; // el diseño de ordenador reparte cada pestaña en columnas
-      contenedor.querySelector(`[data-pestana="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       PESTANAS.find((p) => p.id === id).montar(panel);
     };
     contenedor.querySelector('.pestanas').addEventListener('click', (e) => {
