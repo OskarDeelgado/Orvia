@@ -62,6 +62,20 @@ async function leerDatosClave() {
   return { ...SIN_DATOS, ...fin, tareas };
 }
 
+// «Tu día» de Endrick (Acción): tarjeta con evento, tareas y hábitos. Además pone al día
+// la ficha de Endrick y, en el ordenador, su despacho de la oficina.
+function montarTuDiaEn(caja, { raiz, alResumen } = {}) {
+  if (!caja || !MODULOS.some((m) => m.id === 'accion')) return;
+  import('../modules/accion/tudia.js')
+    .then(({ montarTuDia }) => import('../modules/accion/resumen.js').then(({ situacionDe }) => montarTuDia(caja, {
+      alResumen(r) {
+        raiz.querySelectorAll('[data-mundo="accion"] .agente-situacion, [data-sala="accion"] .agente-situacion').forEach((el) => { el.textContent = situacionDe(r); });
+        alResumen?.(r);
+      },
+    })))
+    .catch(() => { caja.hidden = true; });
+}
+
 function cabecera(nombre) {
   return `
     <header class="panel-cabecera">
@@ -106,8 +120,10 @@ function pintarPanelMovil(raiz, { nombre }) {
           <a class="dato" href="#/finanzas"><span class="etiqueta" id="dc-etiqueta">Te quedan en ${mesActual()}</span><span class="cifra" id="dc-queda">${d.queda}</span></a>
           <a class="dato" href="#/finanzas"><span class="etiqueta">Patrimonio</span><span class="cifra" id="dc-patrimonio">${d.patrimonio}</span></a>
         </div>
-        <a class="nota-despacho" id="dc-nota" href="#/accion">Hoy: ${escapar(d.tareas)}.</a>
+        <p class="nota-despacho" id="dc-nota" hidden></p>
       </section>
+
+      <section class="bloque tu-dia" id="tu-dia" data-mundo="accion" aria-labelledby="t-tu-dia"><p class="suave">Cargando tu día…</p></section>
 
       <section aria-labelledby="t-equipo">
         <h2 id="t-equipo" class="titulo-seccion">Tu equipo</h2>
@@ -121,8 +137,11 @@ function pintarPanelMovil(raiz, { nombre }) {
     raiz.querySelector('#dc-queda').textContent = datos.queda;
     raiz.querySelector('#dc-patrimonio').textContent = datos.patrimonio;
     if (datos.mes) raiz.querySelector('#dc-etiqueta').textContent = datos.etiquetaQueda;
-    raiz.querySelector('#dc-nota').textContent = `Hoy: ${datos.tareas}.${datos.hayFinanzas ? '' : ' Las cifras aparecerán cuando pongas en marcha Finanzas.'}`;
+    const nota = raiz.querySelector('#dc-nota');
+    nota.hidden = datos.hayFinanzas;
+    nota.textContent = 'Las cifras aparecerán cuando pongas en marcha Finanzas.';
   });
+  montarTuDiaEn(raiz.querySelector('#tu-dia'), { raiz });
   return () => {};
 }
 
@@ -150,6 +169,7 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
              <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>`}
       </header>
       <aside class="equipo-flotante flotante" aria-labelledby="t-equipo">
+        ${pantallaCompleta ? '' : '<section class="tu-dia tu-dia-flotante" id="tu-dia" data-mundo="accion" aria-labelledby="t-tu-dia"></section>'}
         <h2 id="t-equipo">Tu equipo</h2>
         <div class="equipo">${fichaTuya}${MODULOS.map((m) => fichaAgente(m, { comoEnlace: false })).join('')}</div>
       </aside>
@@ -158,6 +178,12 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
   const escena = raiz.querySelector('#oficina');
   let oficina = null;
   let cancelado = false;
+  let ultimoResumen = null;
+
+  // Tu día: tarjeta en el lateral y datos para el despacho de Endrick (pantalla y decoración).
+  const cajaDia = raiz.querySelector('#tu-dia');
+  if (cajaDia) montarTuDiaEn(cajaDia, { raiz, alResumen: (r) => { ultimoResumen = r; if (!cancelado) oficina?.actualizarDatos({ accion: r }); } });
+  else import('../modules/accion/resumen.js').then(({ leerResumenDia }) => leerResumenDia()).then((r) => { ultimoResumen = r; if (!cancelado) oficina?.actualizarDatos({ accion: r }); }).catch(() => {});
 
   // Las fichas entran en el despacho de cada agente.
   raiz.querySelector('.equipo').addEventListener('click', (ev) => {
@@ -175,6 +201,7 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
       if (cancelado) return o.destruir();
       oficina = o;
       leerDatosClave().then((datos) => { if (!cancelado) o.actualizarDatos(datos); });
+      if (ultimoResumen) o.actualizarDatos({ accion: ultimoResumen });
     })
     .catch((e) => {
       console.error(e);

@@ -3043,3 +3043,39 @@ button.an-fila { cursor: pointer; }
 .calendario-pasos svg { width: 16px; height: 16px; vertical-align: -3px; }
 .chip-color { width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; box-shadow: inset 0 0 0 3px var(--superficie); }
 .chip-color[aria-pressed='true'] { border-color: var(--tinta); }
+
+/* ---------- Tu día (Endrick) en el Panel y en el lateral de la oficina (bloque 5) ---------- */
+.tu-dia { display: grid; gap: var(--esp-3); margin-top: var(--esp-3); }
+.tu-dia-cabecera { display: flex; align-items: center; gap: var(--esp-3); }
+.tu-dia-cabecera > div { flex: 1; min-width: 0; display: grid; }
+.tu-dia-cabecera h2 { margin: 0; font-size: 1.0625rem; }
+.tu-dia-cabecera .suave { font-size: 0.8125rem; }
+.tu-dia .avatar-mini { flex: none; }
+.tu-dia-evento {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-left: 3px solid var(--c);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tu-dia-evento-hora { flex: none; min-width: 3.2em; font-weight: 800; color: var(--c); font-variant-numeric: tabular-nums; }
+.tu-dia-evento-texto { flex: 1; min-width: 0; display: grid; }
+.tu-dia-evento-texto strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tu-dia-evento-texto .suave { font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tu-dia-mas { flex: none; font-size: 0.8125rem; }
+.tu-dia-nada { font-size: 0.875rem; }
+.tu-dia-tareas { display: grid; gap: var(--esp-1); }
+.tu-dia-tareas .tarea-texto { text-decoration: none; color: inherit; }
+.tu-dia-habitos .habitos-mini { margin-top: 0; }
+.tu-dia-habitos .habito-mini { padding: var(--esp-2) var(--esp-3); gap: 4px; }
+.tu-dia-flotante { margin: 0 0 var(--esp-2); padding-bottom: var(--esp-3); border-bottom: 1px solid var(--linea); }
+.tu-dia-flotante .habitos-mini { grid-template-columns: 1fr 1fr; }
+@media (max-width: 899px), (pointer: coarse) { .tu-dia-flotante { display: none; } }

@@ -30,3 +30,9 @@ export function rangoSemana(lunes) {
   return `${a.getDate()} ${MESES[a.getMonth()].slice(0, 3)} – ${b.getDate()} ${MESES[b.getMonth()].slice(0, 3)}`;
 }
 
+/** «20 nov», o «20 nov 2027» si no es de este año. */
+export function fechaCorta(t) {
+  const d = aFecha(t);
+  const anio = d.getFullYear() !== aFecha(hoy()).getFullYear() ? ` ${d.getFullYear()}` : '';
+  return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}${anio}`;
+}

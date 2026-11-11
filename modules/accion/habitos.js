@@ -189,7 +189,7 @@ const ICONOS_LOGRO = {
 // ---------- Tarjetas compactas en tu semana ----------
 
 /** Encima de la semana: tu nivel y los hábitos de esta semana, para marcar sin cambiar de pantalla. */
-export async function pintarHabitosSemana(caja, { dia } = {}) {
+export async function pintarHabitosSemana(caja, { dia, incrustado = false } = {}) {
   try {
     await cargar();
   } catch (e) {
@@ -200,16 +200,12 @@ export async function pintarHabitosSemana(caja, { dia } = {}) {
   const h0 = hoy();
   const marcarEn = dia && dia <= h0 && lunesDe(dia) === lunesDe(h0) ? dia : h0;
   if (!motor.resumenes.length) {
+    if (incrustado) { caja.innerHTML = '<a class="enlace" href="#/accion/habitos">Crea tus hábitos y gana XP</a>'; return; }
     caja.innerHTML = `<a class="cristal habitos-vacio" href="#/accion/habitos"><strong>Hábitos</strong><span class="suave">Gana XP y sube de nivel con tus hábitos. Empieza aquí.</span></a>`;
     return;
   }
   const g = motor.general;
-  caja.innerHTML = `
-    <section class="cristal habitos-semana" aria-labelledby="t-hab-semana">
-      <div class="titulo-con-enlace">
-        <h2 id="t-hab-semana">Hábitos${marcarEn !== h0 ? ` · ${escapar(etiquetaDia(marcarEn).toLowerCase())}` : ''}</h2>
-        <a class="chip-nivel" href="#/accion/habitos" aria-label="Ver hábitos: nivel ${g.nivel}"><span>${g.nivel}</span>Nivel</a>
-      </div>
+  const tarjetas = `
       <div class="habitos-mini">
         ${motor.resumenes.map((r) => {
           const { habito: h, actual } = r;
@@ -229,7 +225,15 @@ export async function pintarHabitosSemana(caja, { dia } = {}) {
             <span class="suave">${actual.cumplida ? 'Semana cumplida' : `${actual.total}/${actual.meta} · ${falta === 1 ? 'uno más y semana cumplida' : `faltan ${falta}`}`}</span>
           </button>`;
         }).join('')}
+      </div>`;
+  if (incrustado) { caja.innerHTML = tarjetas; return; }
+  caja.innerHTML = `
+    <section class="cristal habitos-semana" aria-labelledby="t-hab-semana">
+      <div class="titulo-con-enlace">
+        <h2 id="t-hab-semana">Hábitos${marcarEn !== h0 ? ` · ${escapar(etiquetaDia(marcarEn).toLowerCase())}` : ''}</h2>
+        <a class="chip-nivel" href="#/accion/habitos" aria-label="Ver hábitos: nivel ${g.nivel}"><span>${g.nivel}</span>Nivel</a>
       </div>
+      ${tarjetas}
     </section>`;
 }
 

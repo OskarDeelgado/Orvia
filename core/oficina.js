@@ -221,6 +221,8 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
           ctx.fillStyle = i % 2 ? '#c084fc' : color;
           ctx.fillRect(190 + i * 28, 200 - h, 18, h);
         }
+      } else if (tipo === 'accion' && datos.accion) {
+        pintarDiaAccion(ctx, W, H, color, datos.accion);
       } else if (tipo === 'accion') {
         for (let col = 0; col < 3; col++) {
           ctx.fillStyle = 'rgba(255,255,255,0.05)';
@@ -244,6 +246,42 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
       }
     }
     p.tex.needsUpdate = true;
+  }
+
+  // Monitor de Endrick: tu día (próximo evento, tareas y hábitos de la semana).
+  function pintarDiaAccion(ctx, W, H, color, a) {
+    const fuente = (peso, px) => `${peso} ${px}px Manrope, system-ui, sans-serif`;
+    ctx.fillStyle = '#f2f4f7';
+    ctx.font = fuente(800, 15);
+    ctx.fillText('HOY', W - 52, 19);
+    let y = 54;
+    const p = a.proximo;
+    ctx.fillStyle = p ? (p.color || '#93c5fd') : '#9aa1ad';
+    ctx.font = fuente(700, 16);
+    ctx.fillText(p ? (p.todoElDia ? 'Todo el día' : p.inicio.slice(11, 16)) : 'Calendario', 16, y);
+    ctx.fillStyle = '#f2f4f7';
+    ctx.font = fuente(600, 19);
+    ctx.fillText(p ? p.titulo : 'Sin más eventos', 16, y + 24, W - 32);
+    y += 50;
+    const n = a.tareas.length;
+    ctx.fillStyle = '#9aa1ad';
+    ctx.font = fuente(600, 15);
+    ctx.fillText('Tareas', 16, y + 6);
+    ctx.fillStyle = n ? '#f2f4f7' : '#4ade80';
+    ctx.font = fuente(700, 19);
+    ctx.fillText(n ? `${n} pendiente${n === 1 ? '' : 's'}` : 'Todo hecho', 90, y + 7, W - 106);
+    y += 26;
+    for (const h of a.habitos.slice(0, 3)) {
+      const k = Math.max(0, Math.min(1, h.meta ? h.total / h.meta : 0));
+      ctx.fillStyle = '#9aa1ad';
+      ctx.font = fuente(600, 13);
+      ctx.fillText(h.titulo, 16, y + 13, 110);
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      redondeado(ctx, 130, y + 4, W - 146, 10, 5); ctx.fill();
+      ctx.fillStyle = k >= 1 ? '#4ade80' : color;
+      redondeado(ctx, 130, y + 4, Math.max(10, (W - 146) * k), 10, 5); ctx.fill();
+      y += 22;
+    }
   }
 
   // ---------- Personas y muebles ----------
@@ -334,6 +372,46 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     return g;
   }
 
+  // Despacho de Endrick: objetos que aparecen al subir de nivel en tus hábitos.
+  const DECORACION_ACCION = [
+    { nivel: 3, nombre: 'una planta grande' },
+    { nivel: 5, nombre: 'una estantería' },
+    { nivel: 8, nombre: 'un trofeo' },
+    { nivel: 12, nombre: 'alfombra y lámpara' },
+  ];
+  const decoracion = [];
+  function decoracionAccion(w, d, mz) {
+    const g = new THREE.Group();
+    const poner = (nivel, obj) => { obj.visible = false; obj.userData.nivel = nivel; decoracion.push(obj); g.add(obj); };
+    poner(3, planta(w / 2 - 0.6, d / 2 - 0.9, 1.35));
+    const e = estanteria(['#4ade80', '#fbbf24', '#e5e7eb', '#0d9488', '#86efac']);
+    e.position.set(w / 2 - 0.35, 0, -0.3); e.rotation.y = -Math.PI / 2;
+    poner(5, e);
+    const trofeo = new THREE.Group();
+    const oro = mat('#fbbf24', { metalness: 0.75, roughness: 0.25, emissive: '#7c4a03', emissiveIntensity: 0.25 });
+    trofeo.add(caja(0.2, 0.05, 0.2, MAT.marcoMonitor, 0, 0.025, 0, false));
+    const copa = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.11, 0.05, 0.18, 16)), oro);
+    copa.position.y = 0.2; copa.castShadow = true;
+    trofeo.add(copa);
+    trofeo.add(caja(0.035, 0.08, 0.035, oro, 0, 0.09, 0, false));
+    trofeo.position.set(0.72, 0.8, mz + 0.05);
+    poner(8, trofeo);
+    const zona = new THREE.Group();
+    zona.add(caja(2.8, 0.012, 1.8, mat('#14532d', { roughness: 0.95 }), 0, 0.046, 0.7, false));
+    zona.add(caja(0.05, 1.6, 0.05, MAT.pata, -w / 2 + 0.55, 0.8, -d / 2 + 0.55, false));
+    const pantallaLampara = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.16, 0.24, 0.26, 18, 1, true)), apuntar(new THREE.MeshStandardMaterial({ color: '#fde68a', emissive: '#fbbf24', emissiveIntensity: 0.8, side: THREE.DoubleSide })));
+    pantallaLampara.position.set(-w / 2 + 0.55, 1.68, -d / 2 + 0.55);
+    zona.add(pantallaLampara);
+    const calida = new THREE.PointLight('#fbbf24', 3, 4, 1.8);
+    calida.position.set(-w / 2 + 0.55, 1.6, -d / 2 + 0.55);
+    zona.add(calida);
+    poner(12, zona);
+    return g;
+  }
+  function ponerNivel(nivel) {
+    for (const obj of decoracion) obj.visible = nivel >= obj.userData.nivel;
+  }
+
   // ---------- Salas ----------
   const objetivosClic = [];
   const personas = [];
@@ -401,6 +479,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
           g.add(n);
         });
         g.add(planta(-w / 2 + 0.6, d / 2 - 0.8, 0.8));
+        g.add(decoracionAccion(w, d, mz));
       } else {
         const m2 = monitor(pantalla('finanzas', '#c084fc'), 0.7);
         m2.position.set(0.85, 0, mz - 0.1); m2.rotation.y = -0.45; g.add(m2);
@@ -646,7 +725,17 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     /** Cambia los datos clave de la pantalla de tu despacho (llegan después de montar). */
     actualizarDatos(nuevos) {
       Object.assign(datos, nuevos);
-      for (const p of pantallas) if (p.tipo === 'datos') pintarPantalla(p);
+      for (const p of pantallas) if (p.tipo === 'datos' || (nuevos.accion && p.tipo === 'accion')) pintarPantalla(p);
+      if (nuevos.accion) {
+        const nivel = nuevos.accion.nivel?.nivel || 1;
+        ponerNivel(nivel);
+        const sala = SALAS.find((x) => x.id === 'accion');
+        if (sala) {
+          const siguiente = DECORACION_ACCION.find((x) => x.nivel > nivel);
+          sala.tarea = `${sala.tareaBase || (sala.tareaBase = sala.tarea)} Despacho de nivel ${nivel}${siguiente ? `: a nivel ${siguiente.nivel} llega ${siguiente.nombre}.` : ': completo.'}`;
+          if (salaActual === 'accion') mostrarInfo(sala);
+        }
+      }
     },
     destruir() {
       cancelAnimationFrame(marco);

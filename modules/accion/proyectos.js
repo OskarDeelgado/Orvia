@@ -9,8 +9,10 @@ import { abrirHojaBase } from '../../core/ui/hoja.js';
 import {
   leerProyectos, crearProyecto, guardarProyecto, eliminarProyecto,
   crearHito, guardarHito, eliminarHito, crearTarea, marcarTarea, avisarCambio,
-  hoy, aFecha, MESES, diaCorto,
+  hoy, diaCorto, fechaCorta,
 } from './datos.js';
+
+export { fechaCorta };
 import { abrirHojaTarea } from './hoja.js';
 
 export const TIPOS = [
@@ -32,13 +34,6 @@ const GRUPOS = [
 ];
 
 const ICONO_NOTA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"/></svg>';
-
-/** «20 nov», o «20 nov 2027» si no es de este año. */
-export function fechaCorta(t) {
-  const d = aFecha(t);
-  const anio = d.getFullYear() !== aFecha(hoy()).getFullYear() ? ` ${d.getFullYear()}` : '';
-  return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}${anio}`;
-}
 
 // Proyecto que estás viendo: el + crea la tarea dentro de él.
 const visto = { id: null, vista: null };
