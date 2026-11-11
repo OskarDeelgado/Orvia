@@ -231,22 +231,60 @@ function rutaActual() {
   return (location.hash.replace(/^#\/?/, '').split('/')[0] || '').toLowerCase();
 }
 
-// El botón "+" está siempre a mano. Hace la acción rápida del módulo que la ofrece
-// (hoy, Finanzas: apuntar un gasto).
-const ACCION_RAPIDA = MODULOS.find((m) => m.accionRapida)?.accionRapida;
+// El botón "+" está siempre a mano. Si solo un módulo ofrece acción rápida, la hace
+// directamente; si hay varias (gasto en Finanzas, tarea en Acción), muestra un menú.
+const ACCIONES = MODULOS.filter((m) => m.accionRapida).map((m) => ({ ...m.accionRapida, modulo: m.id, color: m.agente?.color }));
 
-function ejecutarAccionRapida() {
-  if (!ACCION_RAPIDA) return;
-  Promise.resolve(ACCION_RAPIDA.ejecutar()).catch((e) => aviso(e.message, { error: true }));
+function ejecutarAccion(accion) {
+  if (!accion) return;
+  Promise.resolve(accion.ejecutar()).catch((e) => aviso(e.message, { error: true }));
+}
+
+function abrirMenuMas(boton) {
+  if (ACCIONES.length < 2) return ejecutarAccion(ACCIONES[0]);
+  const abierto = document.querySelector('.menu-mas');
+  if (abierto) return abierto.cerrar();
+  const menu = document.createElement('div');
+  menu.className = 'menu-mas';
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', 'Añadir');
+  // Primero, la acción del módulo en el que estás.
+  const actual = rutaActual();
+  const lista = [...ACCIONES].sort((a, b) => (b.modulo === actual) - (a.modulo === actual));
+  menu.innerHTML = lista.map((a, i) => `<button type="button" role="menuitem" data-i="${i}" style="--c:${a.color || 'var(--acento)'}"><span class="menu-mas-punto"></span>${escapar(a.etiqueta)}</button>`).join('');
+  const r = boton.getBoundingClientRect();
+  menu.style.right = Math.max(12, innerWidth - r.right) + 'px';
+  menu.style.bottom = Math.max(12, innerHeight - r.top + 10) + 'px';
+  document.body.append(menu);
+  boton.setAttribute('aria-expanded', 'true');
+  const cerrar = () => {
+    menu.remove();
+    boton.setAttribute('aria-expanded', 'false');
+    removeEventListener('pointerdown', fuera, true);
+    removeEventListener('keydown', tecla);
+  };
+  const fuera = (e) => { if (!menu.contains(e.target) && e.target !== boton && !boton.contains(e.target)) cerrar(); };
+  const tecla = (e) => { if (e.key === 'Escape') { cerrar(); boton.focus(); } };
+  menu.cerrar = cerrar;
+  menu.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    cerrar();
+    ejecutarAccion(lista[+b.dataset.i]);
+  });
+  addEventListener('pointerdown', fuera, true);
+  addEventListener('keydown', tecla);
+  menu.querySelector('button')?.focus();
 }
 
 function botonMas() {
   const boton = document.createElement('button');
   boton.className = 'boton-mas';
   boton.type = 'button';
-  boton.setAttribute('aria-label', ACCION_RAPIDA?.etiqueta || 'Añadir');
+  boton.setAttribute('aria-label', ACCIONES.length > 1 ? 'Añadir' : ACCIONES[0]?.etiqueta || 'Añadir');
+  if (ACCIONES.length > 1) { boton.setAttribute('aria-haspopup', 'menu'); boton.setAttribute('aria-expanded', 'false'); }
   boton.innerHTML = ICONOS.mas;
-  boton.addEventListener('click', ejecutarAccionRapida);
+  boton.addEventListener('click', () => abrirMenuMas(boton));
   return boton;
 }
 
@@ -284,11 +322,12 @@ function abrirModuloDesdeOficina(id) {
 
 async function mostrarRuta() {
   let id = rutaActual();
-  // #/gasto (atajo del iPhone): abre el Panel con el panel de apuntar gasto ya abierto.
-  if (id === 'gasto') {
+  // #/gasto y #/tarea (atajos del iPhone): abren el Panel con el panel de apuntar ya abierto.
+  const directa = ACCIONES.find((a) => a.ruta && a.ruta === id);
+  if (directa) {
     history.replaceState(null, '', location.pathname + '#/');
     id = '';
-    setTimeout(ejecutarAccionRapida, 50);
+    setTimeout(() => ejecutarAccion(directa), 50);
   }
   limpiarVista?.();
   limpiarVista = null;

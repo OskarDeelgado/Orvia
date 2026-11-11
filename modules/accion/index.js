@@ -1,27 +1,28 @@
-import { moduloPendiente } from '../../core/ui/componentes.js';
+// Módulo Acción (Endrick): lo que haces.
+// Bloque 1: tu semana con tareas y la bandeja «Sin fecha».
+// Llegan después: hábitos, proyectos (con presupuesto enlazado a Finanzas) y tu calendario.
+
+import { montarSemana, diaPropuesto } from './semana.js';
 
 export default {
   id: 'accion',
   nombre: 'Acción',
-  estado: 'pronto',
+  estado: 'activo',
   // Responsable del módulo en la oficina y en el panel del móvil.
   agente: {
     nombre: 'Endrick',
     puesto: 'Jefe de operaciones',
     color: '#4ade80',
-    tarea: 'Organiza tus objetivos, proyectos, tareas y la semana.',
-    situacion: 'Llega en enero',
+    tarea: 'Organiza tu semana: tareas, hábitos y proyectos.',
+    situacion: 'Tu semana ya está en marcha',
+  },
+  // Lo que ofrece el botón + desde cualquier pantalla.
+  accionRapida: {
+    etiqueta: 'Nueva tarea',
+    ruta: 'tarea',
+    ejecutar: () => import('./hoja.js').then((h) => h.abrirHojaTarea({ fecha: diaPropuesto() })),
   },
   async montar(contenedor) {
-    contenedor.innerHTML = moduloPendiente({
-      fase: 'Llega en enero y febrero de 2027',
-      descripcion: 'Aquí organizarás qué quieres conseguir y qué vas a hacer cada semana para lograrlo.',
-      incluye: [
-        'Objetivos a corto, medio y largo plazo',
-        'Proyectos: también viajes, formaciones y proyectos laborales',
-        'Tareas y hábitos',
-        'Planificador semanal',
-      ],
-    });
+    await montarSemana(contenedor);
   },
 };

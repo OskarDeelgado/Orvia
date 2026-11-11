@@ -36,7 +36,8 @@ export default {
   },
   // Lo que hace el botón + desde cualquier pantalla de Orvia.
   accionRapida: {
-    etiqueta: 'Apuntar un movimiento',
+    etiqueta: 'Apuntar un gasto o ingreso',
+    ruta: 'gasto',
     // Como en Sobrea: si estás viendo un mes, propone su fecha (hoy si es el actual).
     ejecutar: () => import('./hoja.js').then((h) => h.abrirHojaGasto({ fecha: fechaPropuesta() })),
   },

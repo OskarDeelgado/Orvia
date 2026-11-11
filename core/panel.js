@@ -26,28 +26,40 @@ function mesActual() {
 }
 
 // Datos clave. Lo que te queda y el patrimonio salen del motor de Finanzas (las
-// mismas cuentas que la pestaña Mes); las tareas llegarán con Acción.
-const SIN_DATOS = { queda: '—', patrimonio: '—', tareas: 'Llegan con Acción', mes: null, hayFinanzas: false };
-async function leerDatosClave() {
+// mismas cuentas que la pestaña Mes); las tareas de hoy, de Acción.
+const SIN_DATOS = { queda: '—', patrimonio: '—', tareas: '—', mes: null, hayFinanzas: false };
+
+async function leerTareas() {
+  try {
+    const { leerHoy } = await import('../modules/accion/datos.js');
+    const t = await leerHoy();
+    let texto = t.pendientes ? `${t.pendientes} ${t.pendientes === 1 ? 'tarea pendiente' : 'tareas pendientes'}`
+      : t.hechas ? 'todo hecho ✓' : 'nada pendiente';
+    if (t.atrasadas) texto += ` y ${t.atrasadas} ${t.atrasadas === 1 ? 'atrasada' : 'atrasadas'}`;
+    return texto;
+  } catch {
+    return '—';
+  }
+}
+
+async function leerFinanzas() {
   try {
     const { leerLibro } = await import('../modules/finanzas/motor.js');
     const { euros, nombreMes } = await import('../modules/finanzas/calculo.js');
     const motor = await leerLibro();
-    if (!motor) return SIN_DATOS;
+    if (!motor) return {};
     const k = motor.kInicial();
     const r = motor.resumenMes(k);
     const mes = nombreMes(r.mes, { anio: false });
-    return {
-      ...SIN_DATOS,
-      queda: euros(r.queda),
-      patrimonio: euros(motor.patrimonio(k).total),
-      mes,
-      etiquetaQueda: `Te quedan en ${mes}`,
-      hayFinanzas: true,
-    };
+    return { queda: euros(r.queda), patrimonio: euros(motor.patrimonio(k).total), mes, etiquetaQueda: `Te quedan en ${mes}`, hayFinanzas: true };
   } catch {
-    return SIN_DATOS;
+    return {};
   }
+}
+
+async function leerDatosClave() {
+  const [fin, tareas] = await Promise.all([leerFinanzas(), leerTareas()]);
+  return { ...SIN_DATOS, ...fin, tareas };
 }
 
 function cabecera(nombre) {
@@ -94,7 +106,7 @@ function pintarPanelMovil(raiz, { nombre }) {
           <a class="dato" href="#/finanzas"><span class="etiqueta" id="dc-etiqueta">Te quedan en ${mesActual()}</span><span class="cifra" id="dc-queda">${d.queda}</span></a>
           <a class="dato" href="#/finanzas"><span class="etiqueta">Patrimonio</span><span class="cifra" id="dc-patrimonio">${d.patrimonio}</span></a>
         </div>
-        <p class="nota-despacho" id="dc-nota">Hoy: ${escapar(d.tareas)}.</p>
+        <a class="nota-despacho" id="dc-nota" href="#/accion">Hoy: ${escapar(d.tareas)}.</a>
       </section>
 
       <section aria-labelledby="t-equipo">
@@ -109,7 +121,7 @@ function pintarPanelMovil(raiz, { nombre }) {
     raiz.querySelector('#dc-queda').textContent = datos.queda;
     raiz.querySelector('#dc-patrimonio').textContent = datos.patrimonio;
     if (datos.mes) raiz.querySelector('#dc-etiqueta').textContent = datos.etiquetaQueda;
-    if (!datos.hayFinanzas) raiz.querySelector('#dc-nota').textContent = `Hoy: ${datos.tareas}. Las cifras aparecerán cuando pongas en marcha Finanzas.`;
+    raiz.querySelector('#dc-nota').textContent = `Hoy: ${datos.tareas}.${datos.hayFinanzas ? '' : ' Las cifras aparecerán cuando pongas en marcha Finanzas.'}`;
   });
   return () => {};
 }

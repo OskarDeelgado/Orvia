@@ -203,7 +203,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
         ctx.fillText(etiqueta, 66, y + 36);
         ctx.fillStyle = '#f2f4f7';
         ctx.font = '300 36px Manrope, system-ui, sans-serif';
-        ctx.fillText(valor, 66, y + 74);
+        ctx.fillText(valor, 66, y + 74, W - 130);
       });
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
