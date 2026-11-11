@@ -916,8 +916,12 @@ textarea {
 .pestanas::-webkit-scrollbar {
   display: none;
 }
-.pestanas button {
+.pestanas :is(button, a) {
   flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   min-height: 38px;
   padding: 0 var(--esp-3);
   border: 0;
@@ -930,7 +934,7 @@ textarea {
   white-space: nowrap;
   cursor: pointer;
 }
-.pestanas button[aria-selected='true'] {
+.pestanas :is(button[aria-selected='true'], a[aria-current='page']) {
   background: color-mix(in srgb, var(--mundo-1) 32%, transparent);
   color: var(--tinta);
   font-weight: 700;
@@ -2330,7 +2334,7 @@ button.an-fila { cursor: pointer; }
     border-radius: var(--radio-l);
     overflow: visible;
   }
-  #contenido > .pestanas button {
+  #contenido > .pestanas :is(button, a) {
     flex: none;
     justify-content: flex-start;
     min-height: 44px;
@@ -2381,7 +2385,7 @@ button.an-fila { cursor: pointer; }
 }
 
 /* ---------- Barra de pestañas de Finanzas abajo, como Sobrea (móvil y tableta) ---------- */
-.pestanas button svg {
+.pestanas :is(button, a) svg {
   width: 24px;
   height: 24px;
   flex: none;
@@ -2405,7 +2409,7 @@ button.an-fila { cursor: pointer; }
     box-shadow: 0 12px 34px rgb(0 0 0 / 0.45);
     overflow: visible;
   }
-  .pestanas.barra-inferior button {
+  .pestanas.barra-inferior :is(button, a) {
     flex: 1 1 0;
     min-width: 0;
     min-height: 58px;
@@ -2419,12 +2423,12 @@ button.an-fila { cursor: pointer; }
     font-size: 0.72rem;
     font-weight: 500;
   }
-  .pestanas.barra-inferior button span {
+  .pestanas.barra-inferior :is(button, a) span {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .pestanas.barra-inferior button[aria-selected='true'] {
+  .pestanas.barra-inferior :is(button[aria-selected='true'], a[aria-current='page']) {
     background: rgb(255 255 255 / 0.08);
     color: var(--mundo-claro);
     font-weight: 600;
@@ -2434,18 +2438,18 @@ button.an-fila { cursor: pointer; }
     padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
   }
   /* El + flota justo encima de la barra */
-  [data-mundo='finanzas']:has(.barra-inferior) .boton-mas {
+  .mundo:has(.barra-inferior) .boton-mas {
     bottom: calc(env(safe-area-inset-bottom) + 92px);
   }
 }
 /* Ordenador: misma barra, en el lateral, con icono y nombre */
 @media (min-width: 1024px) {
-  #contenido > .pestanas button {
+  #contenido > .pestanas :is(button, a) {
     display: flex;
     align-items: center;
     gap: var(--esp-3);
   }
-  #contenido > .pestanas button svg {
+  #contenido > .pestanas :is(button, a) svg {
     width: 20px;
     height: 20px;
   }
@@ -2885,32 +2889,6 @@ button.an-fila { cursor: pointer; }
 }
 
 /* ---------- Acción: secciones y proyectos (bloque 3) ---------- */
-.nav-accion {
-  display: flex;
-  gap: 4px;
-  width: fit-content;
-  max-width: 100%;
-  margin-bottom: var(--esp-4);
-  padding: 4px;
-  border-radius: 14px;
-  border: 1px solid var(--cristal-linea);
-  background: var(--cristal);
-}
-.nav-accion a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 38px;
-  padding: 0 var(--esp-4);
-  border-radius: 10px;
-  color: var(--tinta-suave);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  text-decoration: none;
-}
-.nav-accion a[aria-current='page'] { background: color-mix(in srgb, var(--mundo-1) 34%, transparent); color: var(--tinta); }
-.nav-accion a:focus-visible { outline: 2px solid var(--mundo-acento); outline-offset: 2px; }
-@media (max-width: 420px) { .nav-accion { width: 100%; } .nav-accion a { flex: 1; justify-content: center; padding: 0 var(--esp-2); } }
-
 /* Tipo de proyecto: color propio para distinguirlos de un vistazo. */
 .tipo-emprendimiento { --tipo: #fbbf24; }
 .tipo-formacion { --tipo: #5eead4; }

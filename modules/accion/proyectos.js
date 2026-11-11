@@ -12,7 +12,6 @@ import {
   hoy, aFecha, MESES, diaCorto,
 } from './datos.js';
 import { abrirHojaTarea } from './hoja.js';
-import { navAccion } from './nav.js';
 
 export const TIPOS = [
   ['emprendimiento', 'Emprendimiento'],
@@ -84,19 +83,19 @@ export async function montarProyectos(contenedor, id = null) {
     try {
       datos = await leerProyectos();
     } catch (e) {
-      contenedor.innerHTML = `${navAccion('proyectos')}<p class="error">${escapar(e.message)}</p>`;
+      contenedor.innerHTML = `<p class="error">${escapar(e.message)}</p>`;
       return;
     }
     if (!contenedor.isConnected) return;
     const p = id && datos.proyectos.find((x) => x.id === id);
     if (id && !p) {
-      contenedor.innerHTML = `${navAccion('proyectos')}<p class="suave">Este proyecto ya no existe.</p><a class="enlace" href="#/accion/proyectos">Ver tus proyectos</a>`;
+      contenedor.innerHTML = `<p class="suave">Este proyecto ya no existe.</p><a class="enlace" href="#/accion/proyectos">Ver tus proyectos</a>`;
       return;
     }
     if (p) pintarFicha(contenedor, datos, resumenProyecto(datos, p));
     else pintarLista(contenedor, datos);
   };
-  contenedor.innerHTML = `${navAccion('proyectos')}<p class="suave">Cargando tus proyectos…</p>`;
+  contenedor.innerHTML = `<p class="suave">Cargando tus proyectos…</p>`;
   await cargar();
 
   const buscarTarea = (tid) => datos?.tareas.find((t) => t.id === tid);
@@ -200,8 +199,7 @@ function pintarLista(contenedor, datos) {
   const terminados = resumenes.filter((r) => ['terminado', 'cancelado'].includes(r.proyecto.estado));
 
   contenedor.innerHTML = `
-    ${navAccion('proyectos')}
-    <div class="titulo-con-enlace proyectos-cabecera">
+        <div class="titulo-con-enlace proyectos-cabecera">
       <h2>Tus proyectos</h2>
       <button class="boton boton-pequeno" type="button" data-nuevo-proyecto>Nuevo proyecto</button>
     </div>
@@ -258,8 +256,7 @@ function pintarFicha(contenedor, datos, r) {
   const todoHecho = r.tareas.length > 0 && r.hechas === r.tareas.length && r.porHito.every((x) => x.logrado || !x.tareas.length);
 
   contenedor.innerHTML = `
-    ${navAccion('proyectos')}
-    <a class="volver-semana" href="#/accion/proyectos">‹ Proyectos</a>
+        <a class="volver-semana" href="#/accion/proyectos">‹ Proyectos</a>
 
     <section class="cristal proyecto-ficha tipo-${escapar(p.tipo)}" aria-labelledby="p-titulo">
       <div class="proyecto-ficha-cabeza">

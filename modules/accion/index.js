@@ -5,6 +5,7 @@
 // Llega después: tu calendario del iPhone.
 
 import { montarSemana, diaPropuesto } from './semana.js';
+import { navAccion } from './nav.js';
 
 export default {
   id: 'accion',
@@ -39,15 +40,18 @@ export default {
   },
   // #/accion → tu semana · #/accion/habitos → hábitos · #/accion/proyectos[/<id>] → proyectos
   async montar(contenedor, { sub } = {}) {
-    if (sub === 'proyectos') {
+    const seccion = sub === 'proyectos' || sub === 'habitos' ? sub : 'semana';
+    contenedor.innerHTML = `${navAccion(seccion)}<div id="panel-accion" data-vista="${seccion}"></div>`;
+    const panel = contenedor.querySelector('#panel-accion');
+    if (seccion === 'proyectos') {
       const id = location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[2] || null;
       const { montarProyectos } = await import('./proyectos.js');
-      await montarProyectos(contenedor, id);
-    } else if (sub === 'habitos') {
+      await montarProyectos(panel, id);
+    } else if (seccion === 'habitos') {
       const { montarHabitos } = await import('./habitos.js');
-      await montarHabitos(contenedor);
+      await montarHabitos(panel);
     } else {
-      await montarSemana(contenedor);
+      await montarSemana(panel);
     }
   },
 };
