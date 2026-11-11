@@ -3,6 +3,7 @@
 // - montarHabitos: la pantalla de Hábitos (nivel, hábitos de la semana, áreas y logros).
 // Marcar un día da XP al momento; si con eso cumples la semana, lo celebra.
 
+import { navAccion } from './nav.js';
 import { escapar, aviso } from '../../core/ui/componentes.js';
 import { abrirHojaBase } from '../../core/ui/hoja.js';
 import {
@@ -304,7 +305,7 @@ function pintarPantalla(contenedor) {
   const mejorArea = areas[0];
 
   contenedor.innerHTML = `
-    <a class="volver-semana" href="#/accion">‹ Tu semana</a>
+    ${navAccion('habitos')}
 
     <section class="cristal nivel-general" aria-label="Tu nivel">
       <div class="insignia-nivel" aria-hidden="true"><span>Nivel</span><strong>${g.nivel}</strong></div>

@@ -2883,3 +2883,123 @@ button.an-fila { cursor: pointer; }
   .celebracion-anillo, .xp-flotante { animation: none; }
   .barra-nivel i, .habito-anillo .lleno, .barra-habito i { transition: none; }
 }
+
+/* ---------- Acción: secciones y proyectos (bloque 3) ---------- */
+.nav-accion {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: var(--esp-4);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--cristal-linea);
+  background: var(--cristal);
+}
+.nav-accion a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 var(--esp-4);
+  border-radius: 10px;
+  color: var(--tinta-suave);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+}
+.nav-accion a[aria-current='page'] { background: color-mix(in srgb, var(--mundo-1) 34%, transparent); color: var(--tinta); }
+.nav-accion a:focus-visible { outline: 2px solid var(--mundo-acento); outline-offset: 2px; }
+@media (max-width: 420px) { .nav-accion { width: 100%; } .nav-accion a { flex: 1; justify-content: center; padding: 0 var(--esp-2); } }
+
+/* Tipo de proyecto: color propio para distinguirlos de un vistazo. */
+.tipo-emprendimiento { --tipo: #fbbf24; }
+.tipo-formacion { --tipo: #5eead4; }
+.tipo-general, .tipo-laboral, .tipo-viaje { --tipo: #93c5fd; }
+.chip-tipo, .chip-estado {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.chip-tipo { color: var(--tipo, var(--mundo-claro)); background: color-mix(in srgb, var(--tipo, var(--mundo-1)) 15%, transparent); }
+.chip-estado { color: var(--tinta-suave); border: 1px solid var(--cristal-linea); }
+.chip-estado.estado-activo { color: var(--mundo-claro); border-color: color-mix(in srgb, var(--mundo-acento) 40%, transparent); }
+.atrasada { color: var(--peligro); }
+
+.proyectos-cabecera { margin-bottom: var(--esp-3); }
+.proyectos-vacio { display: grid; gap: var(--esp-3); justify-items: start; padding: var(--esp-5); }
+.proyectos-vacio h3 { font-size: 1.25rem; }
+.proyectos-vacio p { max-width: 60ch; }
+.grupo-proyectos { margin-bottom: var(--esp-5); }
+.grupo-titulo { font-size: 0.9375rem; font-weight: 700; margin-bottom: var(--esp-2); color: var(--tinta-suave); }
+.terminados summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; }
+.proyectos-rejilla { display: grid; gap: var(--esp-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.proyecto-tarjeta {
+  position: relative;
+  display: grid;
+  gap: var(--esp-2);
+  padding: var(--esp-4);
+  padding-left: calc(var(--esp-4) + 4px);
+  color: var(--tinta);
+  text-decoration: none;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.proyecto-tarjeta::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--tipo); }
+.proyecto-tarjeta:hover { border-color: color-mix(in srgb, var(--tipo) 45%, transparent); }
+.proyecto-tarjeta:focus-visible { outline: 2px solid var(--mundo-acento); outline-offset: 2px; }
+.proyecto-tarjeta > * { margin: 0; }
+.proyecto-tarjeta h4 { font-size: 1.125rem; line-height: 1.25; }
+.proyecto-tarjeta-cabeza, .proyecto-pie { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); font-size: 0.8125rem; }
+.proyecto-pie { color: var(--tinta-suave); }
+.proyecto-pie strong { color: var(--tinta); font-size: 0.9375rem; }
+.proyecto-proximo { font-size: 0.875rem; }
+.proyecto-proximo .suave { display: block; font-size: 0.75rem; }
+.barra-proyecto { height: 6px; border-radius: 999px; background: rgb(255 255 255 / 0.08); overflow: hidden; }
+.barra-proyecto i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--mundo-1), var(--tipo, var(--mundo-acento))); transition: width 0.4s ease; }
+.barra-proyecto.grande { height: 10px; flex: 1; }
+.barra-proyecto.fina { height: 4px; margin: 2px 0 var(--esp-1); }
+
+.proyecto-ficha { display: grid; gap: var(--esp-2); padding: var(--esp-5); margin-bottom: var(--esp-4); border-top: 3px solid var(--tipo); }
+.proyecto-ficha-cabeza { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); }
+.proyecto-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
+.proyecto-ficha h2 { font-size: 1.5rem; line-height: 1.2; }
+.proyecto-descripcion { color: var(--tinta-suave); max-width: 65ch; white-space: pre-line; }
+.proyecto-progreso { display: flex; align-items: center; gap: var(--esp-3); margin-top: var(--esp-2); }
+.proyecto-progreso strong { font-size: 1.125rem; min-width: 3.5ch; text-align: right; }
+.proyecto-ficha .boton { margin-top: var(--esp-2); }
+
+.hitos { display: grid; gap: var(--esp-3); margin-bottom: var(--esp-3); }
+.hito { padding: var(--esp-3) var(--esp-4) var(--esp-2); }
+.hito-cabecera { display: flex; align-items: flex-start; gap: var(--esp-2); }
+.hito-info { flex: 1; min-width: 0; display: grid; gap: 2px; padding-top: 10px; }
+.sin-hito .hito-info { padding-top: 4px; }
+.hito-info h3 { font-size: 1.0625rem; display: flex; align-items: center; gap: var(--esp-2); }
+.hito-info .suave { font-size: 0.8125rem; }
+.hito-cabecera .enlace { margin-top: 6px; }
+.hito-numero {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.08);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--tinta-suave);
+}
+.casilla-hito svg { border-radius: 50%; }
+.hito.logrado { border-color: color-mix(in srgb, var(--mundo-acento) 35%, transparent); background: color-mix(in srgb, var(--mundo-1) 9%, var(--cristal)); }
+.hito.logrado .hito-info h3 { color: var(--mundo-claro); }
+.hito.logrado .hito-numero { background: var(--mundo-1); color: #fff; }
+.anadir-hito { margin-bottom: var(--esp-6); border-style: dashed; }
+.tarea-proyecto { color: var(--mundo-claro); font-weight: 600; }
+.chips-hito { margin-top: var(--esp-2); padding-left: var(--esp-3); border-left: 2px solid var(--cristal-linea); }
+.chips-hito[hidden] { display: none; }
+@media (min-width: 1024px) {
+  .hitos { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); align-items: start; }
+}

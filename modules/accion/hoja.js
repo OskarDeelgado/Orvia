@@ -1,9 +1,9 @@
-// Panel para crear o editar una tarea: título, día, prioridad, área y notas.
+// Panel para crear o editar una tarea: título, día, prioridad, proyecto (e hito), área y notas.
 
 import { escapar, aviso } from '../../core/ui/componentes.js';
 import { abrirHojaBase } from '../../core/ui/hoja.js';
 import { listarAreas } from '../../core/areas.js';
-import { crearTarea, guardarTarea, eliminarTarea, hoy, sumarDias, etiquetaDia, avisarCambio } from './datos.js';
+import { crearTarea, guardarTarea, eliminarTarea, proyectosParaElegir, hoy, sumarDias, etiquetaDia, avisarCambio } from './datos.js';
 
 const PRIORIDADES = [[1, 'Alta'], [2, 'Normal'], [3, 'Baja']];
 
@@ -11,14 +11,17 @@ const PRIORIDADES = [[1, 'Alta'], [2, 'Normal'], [3, 'Baja']];
  * @param {object} [o]
  * @param {object} [o.tarea]  la tarea a editar (si no, se crea una)
  * @param {string|null} [o.fecha]  día propuesto para una tarea nueva (null = sin fecha)
+ * @param {string|null} [o.proyecto]  proyecto propuesto para una tarea nueva
  */
-export async function abrirHojaTarea({ tarea = null, fecha } = {}) {
-  const areas = await listarAreas().catch(() => []);
+export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null } = {}) {
+  const [areas, proyectos] = await Promise.all([listarAreas().catch(() => []), proyectosParaElegir().catch(() => [])]);
   const editando = !!tarea;
   const estado = {
-    fecha: editando ? tarea.fecha : fecha === undefined ? hoy() : fecha,
+    fecha: editando ? tarea.fecha : fecha === undefined ? (proyecto ? null : hoy()) : fecha,
     prioridad: editando ? tarea.prioridad : 2,
     area: editando ? tarea.area_id : null,
+    proyecto: editando ? tarea.proyecto_id : proyecto,
+    hito: editando ? tarea.hito_id : null,
   };
   const { cuerpo, cerrar } = abrirHojaBase(editando ? 'Editar tarea' : 'Nueva tarea', { mundo: 'accion' });
   const h = hoy();
@@ -44,6 +47,13 @@ export async function abrirHojaTarea({ tarea = null, fecha } = {}) {
           ${PRIORIDADES.map(([v, l]) => `<button type="button" class="segmento" data-prioridad="${v}">${l}</button>`).join('')}
         </div>
       </div>
+      ${proyectos.length ? `<div class="campo">
+        <span class="etiqueta-campo" id="et-proyecto">Proyecto (opcional)</span>
+        <div class="chips-elegir" role="group" aria-labelledby="et-proyecto">
+          ${proyectos.map((p) => `<button type="button" class="chip-opcion" data-proyecto="${p.id}">${escapar(p.titulo)}</button>`).join('')}
+        </div>
+        <div class="chips-elegir chips-hito" role="group" aria-label="Hito del proyecto" id="tarea-hitos"></div>
+      </div>` : ''}
       ${areas.length ? `<div class="campo">
         <span class="etiqueta-campo" id="et-area">Área de tu vida (opcional)</span>
         <div class="chips-elegir" role="group" aria-labelledby="et-area">
@@ -62,7 +72,18 @@ export async function abrirHojaTarea({ tarea = null, fecha } = {}) {
   const pintarEstado = () => {
     cuerpo.querySelectorAll('[data-dia]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.dia || null) === estado.fecha)));
     $('#tarea-fecha').value = estado.fecha || '';
-    $('#tarea-dia-texto').textContent = estado.fecha ? etiquetaDia(estado.fecha, { relativo: false }).replace(/^./, (c) => c.toUpperCase()) : 'Irá a la bandeja «Sin fecha»';
+    $('#tarea-dia-texto').textContent = estado.fecha ? etiquetaDia(estado.fecha, { relativo: false }).replace(/^./, (c) => c.toUpperCase())
+      : estado.proyecto ? 'Se queda en el proyecto hasta que le pongas día' : 'Irá a la bandeja «Sin fecha»';
+    cuerpo.querySelectorAll('[data-proyecto]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.proyecto === estado.proyecto)));
+    const caja = $('#tarea-hitos');
+    if (caja) {
+      const hitos = proyectos.find((p) => p.id === estado.proyecto)?.hitos || [];
+      // Un hito ya logrado que tenía la tarea se sigue mostrando para no perderlo al guardar.
+      const lista = estado.hito && !hitos.some((h) => h.id === estado.hito) && tarea?.hito_id === estado.hito ? [{ id: estado.hito, titulo: 'Hito actual' }, ...hitos] : hitos;
+      caja.hidden = !lista.length;
+      caja.innerHTML = lista.length ? `<button type="button" class="chip-opcion" data-hito="">Sin hito</button>${lista.map((h) => `<button type="button" class="chip-opcion" data-hito="${h.id}">${escapar(h.titulo)}</button>`).join('')}` : '';
+      caja.querySelectorAll('[data-hito]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.hito || null) === estado.hito)));
+    }
     cuerpo.querySelectorAll('[data-prioridad]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.prioridad === estado.prioridad)));
     cuerpo.querySelectorAll('[data-area]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.area === estado.area)));
   };
@@ -74,6 +95,12 @@ export async function abrirHojaTarea({ tarea = null, fecha } = {}) {
     if (!b) return;
     if (b.dataset.dia !== undefined) { estado.fecha = b.dataset.dia || null; pintarEstado(); }
     else if (b.dataset.prioridad) { estado.prioridad = +b.dataset.prioridad; pintarEstado(); }
+    else if (b.dataset.proyecto) {
+      estado.proyecto = estado.proyecto === b.dataset.proyecto ? null : b.dataset.proyecto;
+      estado.hito = null;
+      pintarEstado();
+    }
+    else if (b.dataset.hito !== undefined) { estado.hito = b.dataset.hito || null; pintarEstado(); }
     else if (b.dataset.area) { estado.area = estado.area === b.dataset.area ? null : b.dataset.area; pintarEstado(); }
     else if (b.id === 'tarea-eliminar') {
       if (b.dataset.confirmar !== '1') {
@@ -100,13 +127,16 @@ export async function abrirHojaTarea({ tarea = null, fecha } = {}) {
     e.preventDefault();
     const titulo = $('#tarea-titulo').value.trim();
     if (!titulo) { aviso('Escribe qué tienes que hacer', { error: true }); $('#tarea-titulo').focus(); return; }
-    const datos = { titulo, fecha: estado.fecha, prioridad: estado.prioridad, area_id: estado.area, notas: $('#tarea-notas').value.trim() || null };
+    const datos = {
+      titulo, fecha: estado.fecha, prioridad: estado.prioridad, area_id: estado.area, notas: $('#tarea-notas').value.trim() || null,
+      proyecto_id: estado.proyecto, hito_id: estado.proyecto ? estado.hito : null,
+    };
     const boton = $('#tarea-guardar');
     boton.disabled = true;
     try {
       if (editando) await guardarTarea(tarea.id, datos);
       else await crearTarea(datos);
-      aviso(editando ? 'Cambios guardados' : datos.fecha ? `Tarea añadida: ${etiquetaDia(datos.fecha).toLowerCase()}` : 'Tarea añadida a «Sin fecha»');
+      aviso(editando ? 'Cambios guardados' : datos.fecha ? `Tarea añadida: ${etiquetaDia(datos.fecha).toLowerCase()}` : datos.proyecto_id ? 'Tarea añadida al proyecto' : 'Tarea añadida a «Sin fecha»');
       cerrar('guardado');
       avisarCambio();
     } catch (err) {

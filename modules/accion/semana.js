@@ -10,6 +10,7 @@ import {
 } from './datos.js';
 import { abrirHojaTarea } from './hoja.js';
 import { pintarHabitosSemana, alClicHabitos } from './habitos.js';
+import { navAccion } from './nav.js';
 
 const ICONO_ANTERIOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
 const ICONO_SIGUIENTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
@@ -34,7 +35,7 @@ export async function montarSemana(contenedor) {
       contenedor.innerHTML = `<p class="error">${escapar(e.message)}</p>`;
     }
   };
-  contenedor.innerHTML = '<p class="suave">Cargando tu semana…</p>';
+  contenedor.innerHTML = `${navAccion('semana')}<p class="suave">Cargando tu semana…</p>`;
   await cargar();
 
   const irASemana = (lunes, dia) => {
@@ -178,6 +179,7 @@ function pintar(contenedor, datos) {
   const desplazamiento = contenedor.querySelector('.tira-dias')?.scrollLeft;
 
   contenedor.innerHTML = `
+    ${navAccion('semana')}
     <div class="semana-cabecera">
       <div class="selector-mes selector-semana">
         <button class="boton-icono" type="button" data-semana="-1" aria-label="Semana anterior">${ICONO_ANTERIOR}</button>
@@ -252,6 +254,8 @@ function filaTarea(t, datos, { conFecha = false } = {}) {
   const area = t.area_id ? datos.porArea[t.area_id] : null;
   const detalles = [];
   if (conFecha && t.fecha) detalles.push(`${diaCorto(t.fecha)} ${aFecha(t.fecha).getDate()}`);
+  const proyecto = t.proyecto_id ? datos.porProyecto?.[t.proyecto_id] : null;
+  if (proyecto) detalles.push(`<span class="tarea-proyecto">${escapar(proyecto.titulo)}</span>`);
   if (area) detalles.push(`<span class="punto" style="--c:var(--area-${area.color})"></span>${escapar(area.nombre)}`);
   return `
     <li class="tarea${hecha ? ' hecha' : ''}${t.prioridad === 1 ? ' alta' : ''}" data-id="${t.id}" draggable="true">

@@ -1,7 +1,8 @@
 // Módulo Acción (Endrick): lo que haces.
 // Bloque 1: tu semana con tareas y la bandeja «Sin fecha».
 // Bloque 2: hábitos con XP, niveles, rachas por semanas, comodín y logros.
-// Llegan después: proyectos (con presupuesto enlazado a Finanzas) y tu calendario.
+// Bloque 3: proyectos con hitos y tareas (las que tienen fecha salen en tu semana).
+// Llega después: tu calendario del iPhone.
 
 import { montarSemana, diaPropuesto } from './semana.js';
 
@@ -14,14 +15,19 @@ export default {
     nombre: 'Endrick',
     puesto: 'Jefe de operaciones',
     color: '#4ade80',
-    tarea: 'Organiza tu semana: tareas y hábitos con niveles.',
+    tarea: 'Organiza tu semana: tareas, proyectos y hábitos con niveles.',
     situacion: 'Tu semana ya está en marcha',
   },
   // Lo que ofrece el botón + desde cualquier pantalla.
   accionRapida: {
     etiqueta: 'Nueva tarea',
     ruta: 'tarea',
-    ejecutar: () => import('./hoja.js').then((h) => h.abrirHojaTarea({ fecha: diaPropuesto() })),
+    // Dentro de un proyecto, la tarea nueva va a ese proyecto.
+    ejecutar: async () => {
+      const [{ abrirHojaTarea }, { proyectoVisto }] = await Promise.all([import('./hoja.js'), import('./proyectos.js')]);
+      const proyecto = proyectoVisto();
+      return proyecto ? abrirHojaTarea({ proyecto }) : abrirHojaTarea({ fecha: diaPropuesto() });
+    },
   },
   // Atajos del iPhone que guardan algo y abren Orvia: #/pasos?n=8432 (desde la app Salud).
   atajos: {
@@ -31,9 +37,13 @@ export default {
       return '#/accion/habitos';
     },
   },
-  // #/accion → tu semana · #/accion/habitos → hábitos con niveles
+  // #/accion → tu semana · #/accion/habitos → hábitos · #/accion/proyectos[/<id>] → proyectos
   async montar(contenedor, { sub } = {}) {
-    if (sub === 'habitos') {
+    if (sub === 'proyectos') {
+      const id = location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[2] || null;
+      const { montarProyectos } = await import('./proyectos.js');
+      await montarProyectos(contenedor, id);
+    } else if (sub === 'habitos') {
       const { montarHabitos } = await import('./habitos.js');
       await montarHabitos(contenedor);
     } else {

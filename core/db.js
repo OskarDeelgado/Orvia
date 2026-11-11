@@ -14,7 +14,7 @@ export const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE
   },
 });
 
-// Todas las tablas: núcleo (001), Finanzas (002) y comodines de hábitos (004). La copia de seguridad las incluye todas.
+// Todas las tablas: núcleo (001), Finanzas (002) y comodines de hábitos (004) e hitos de proyectos (005). La copia de seguridad las incluye todas.
 export const TABLAS = [
   'areas',
   'objetivos',
@@ -23,6 +23,7 @@ export const TABLAS = [
   'habitos',
   'habitos_registros',
   'habitos_comodines',
+  'hitos',
   'notas',
   'enlaces',
   'fin_config',
@@ -51,18 +52,20 @@ function comprobar({ data, error }, accion) {
  * @param {string} tabla
  * @param {object} [opciones]
  * @param {object} [opciones.filtros]  igualdades campo → valor
+ * @param {string[]} [opciones.conValor]  campos que no pueden ser nulos
  * @param {object} [opciones.rango]    { campo, desde, hasta }: desde incluido, hasta excluido
  * @param {string} [opciones.orden]    campo por el que ordenar
  * @param {boolean} [opciones.ascendente=true]
  * @param {boolean} [opciones.incluirArchivados=false]
  */
 export async function listar(tabla, opciones = {}) {
-  const { filtros = {}, rango = null, orden = 'creado', ascendente = true, incluirArchivados = false } = opciones;
+  const { filtros = {}, conValor = [], rango = null, orden = 'creado', ascendente = true, incluirArchivados = false } = opciones;
   let consulta = cliente.from(tabla).select('*');
   if (!incluirArchivados) consulta = consulta.eq('archivado', false);
   for (const [campo, valor] of Object.entries(filtros)) {
     consulta = valor === null ? consulta.is(campo, null) : consulta.eq(campo, valor);
   }
+  for (const campo of conValor) consulta = consulta.not(campo, 'is', null);
   if (rango?.desde != null) consulta = consulta.gte(rango.campo, rango.desde);
   if (rango?.hasta != null) consulta = consulta.lt(rango.campo, rango.hasta);
   consulta = consulta.order(orden, { ascending: ascendente });
