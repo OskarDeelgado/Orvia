@@ -2676,3 +2676,210 @@ button.an-fila { cursor: pointer; }
   .atrasadas { padding: var(--esp-2); }
   .atrasadas .titulo-con-enlace { flex-wrap: wrap; gap: 0 var(--esp-2); }
 }
+
+/* ---------- Hábitos con niveles ---------- */
+.visualmente-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.habitos-semana-caja:empty { display: none; }
+.habitos-semana-caja { margin-bottom: var(--esp-3); }
+.habitos-semana h2 { font-size: 1rem; }
+.chip-nivel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--cristal-linea);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--tinta);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.chip-nivel span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #16a34a, #0d9488);
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+.habitos-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--esp-2); margin-top: var(--esp-2); }
+@media (min-width: 900px) { .habitos-mini { grid-template-columns: repeat(auto-fill, minmax(240px, 300px)); } }
+.habito-mini {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: var(--esp-3);
+  border-radius: 16px;
+  border: 1px solid var(--cristal-linea);
+  background: rgb(255 255 255 / 0.03);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.habito-mini .suave { font-size: 0.78rem; }
+.habito-mini.hecho { border-color: color-mix(in srgb, var(--mundo-acento) 50%, transparent); background: color-mix(in srgb, var(--mundo-1) 14%, transparent); }
+.habito-mini-titulo { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); }
+.habito-mini-estado { font-size: 0.8125rem; font-weight: 600; color: var(--mundo-claro); }
+.habitos-vacio { display: grid; gap: 4px; text-decoration: none; color: var(--tinta); }
+.habito-anillo .pista { fill: none; stroke: rgb(255 255 255 / 0.1); stroke-width: 10; }
+.habito-anillo .lleno { fill: none; stroke: var(--mundo-acento); stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 0.4s ease; }
+.habito-anillo.completo .lleno { stroke: #4ade80; filter: drop-shadow(0 0 4px rgb(74 222 128 / 0.6)); }
+.habito-anillo .cifra { fill: var(--tinta); font: 800 22px var(--fuente); }
+.habito-anillo .sub { fill: var(--tinta-suave); font: 500 10px var(--fuente); }
+.barra-habito { display: block; height: 10px; border-radius: 999px; background: rgb(255 255 255 / 0.1); overflow: hidden; }
+.barra-habito i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #0d9488, #5eead4); transition: width 0.4s ease; }
+.barra-habito.completa i { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
+.volver-semana { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: var(--esp-2); color: var(--mundo-claro); font-weight: 600; text-decoration: none; }
+.nivel-general { display: flex; align-items: center; gap: var(--esp-4); }
+.insignia-nivel {
+  flex: none;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #16a34a, #0d9488);
+  box-shadow: 0 8px 28px rgb(22 163 74 / 0.45);
+  line-height: 1;
+}
+.insignia-nivel span { font-size: 0.7rem; font-weight: 600; color: #dcfce7; }
+.insignia-nivel strong { font-size: 2rem; font-weight: 800; }
+.nivel-info { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.nivel-info .suave { font-size: 0.8125rem; }
+.fila-nivel { display: flex; justify-content: space-between; align-items: baseline; gap: var(--esp-2); }
+.fila-nivel .suave { font-size: 0.8125rem; }
+.barra-nivel { display: block; height: 10px; border-radius: 999px; background: rgb(255 255 255 / 0.1); overflow: hidden; }
+.barra-nivel i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4ade80, #bbf7d0); transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.barra-nivel.fina { flex: 1; height: 8px; }
+.comodin { border-color: color-mix(in srgb, var(--alerta) 45%, transparent); background: color-mix(in srgb, var(--alerta) 8%, transparent); display: grid; gap: var(--esp-2); }
+.comodin .boton { justify-self: start; }
+.habitos-lista { display: grid; gap: var(--esp-3); }
+.habitos-lista > .cristal + .cristal { margin-top: 0; }
+.habito { position: relative; display: grid; gap: var(--esp-3); }
+.habito-cabecera { display: flex; align-items: center; gap: var(--esp-4); }
+.habito-info { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.habito-info .suave { font-size: 0.8125rem; }
+.habito-titulo { display: flex; justify-content: space-between; align-items: center; gap: var(--esp-2); padding-right: 64px; }
+.habito-titulo h3 { font-size: 1.125rem; }
+.racha { padding: 3px 10px; border-radius: 999px; background: rgb(245 165 36 / 0.16); color: #fbbf24; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+.habito-estado { font-size: 0.8125rem; color: var(--mundo-claro); }
+.habito-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.habito-dia {
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: transparent;
+  color: var(--tinta-suave);
+  font: 600 0.8125rem var(--fuente);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.habito-dia.hecho { border-color: transparent; background: #16a34a; color: #fff; font-weight: 700; }
+.habito-dia.hoy:not(.hecho) { border: 2px solid var(--mundo-acento); color: var(--tinta); background: rgb(134 239 172 / 0.08); }
+.habito-dia:disabled { border-color: rgb(255 255 255 / 0.05); color: var(--tinta-apagada); opacity: 0.6; cursor: default; }
+.habito-dia:active:not(:disabled) { transform: scale(0.94); }
+.habito-cifra { display: flex; align-items: baseline; gap: var(--esp-2); }
+.habito-cifra span:first-child { font-size: 2.125rem; font-weight: 300; }
+.habito-barras { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; height: 96px; }
+.habito-barra {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 4px;
+  align-items: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tinta-suave);
+  font: 500 0.72rem var(--fuente);
+  cursor: pointer;
+}
+.habito-barra i { display: block; width: 100%; border-radius: 8px; background: rgb(45 212 191 / 0.55); }
+.habito-barra i.llega { background: #2dd4bf; }
+.habito-barra i.vacia { background: rgb(255 255 255 / 0.08); }
+.habito-barra.hoy i { outline: 2px solid var(--mundo-acento); outline-offset: 1px; }
+.habito-barra.hoy span { color: var(--tinta); font-weight: 700; }
+.habito-barra:disabled { cursor: default; opacity: 0.55; }
+.habito-pie { display: flex; justify-content: space-between; gap: var(--esp-2); font-size: 0.8125rem; }
+.editar-habito { position: absolute; top: var(--esp-4); right: var(--esp-5); min-height: 36px; font-size: 0.8125rem; color: var(--tinta-suave); }
+.habitos-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--esp-2); margin: var(--esp-3) 0; }
+.habitos-acciones .boton { display: grid; justify-items: start; gap: 2px; min-height: 60px; padding: var(--esp-2) var(--esp-4); text-align: left; }
+.habitos-acciones .boton span { font-size: 0.78rem; font-weight: 400; color: var(--tinta-suave); }
+.area-nivel { display: flex; align-items: center; gap: var(--esp-3); padding: 6px 0; }
+.area-nombre { width: 96px; font-size: 0.9375rem; }
+.area-n { width: 46px; text-align: right; font-size: 0.8125rem; }
+.logros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--esp-3) var(--esp-2); margin-top: var(--esp-3); }
+.logro { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.medalla { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; border: 2px dashed rgb(255 255 255 / 0.18); color: var(--tinta-apagada); }
+.medalla svg { width: 24px; height: 24px; }
+.logro.ok .medalla { border: 0; color: #052e16; box-shadow: 0 6px 18px rgb(0 0 0 / 0.35); }
+.logro.ok.check .medalla, .logro.ok.estrella .medalla { background: radial-gradient(circle at 35% 30%, #fde68a, #d97706); color: #451a03; }
+.logro.ok.llama .medalla { background: radial-gradient(circle at 35% 30%, #fed7aa, #ea580c); color: #431407; }
+.logro.ok.pesa .medalla { background: radial-gradient(circle at 35% 30%, #bbf7d0, #16a34a); }
+.logro.ok.pasos .medalla { background: radial-gradient(circle at 35% 30%, #99f6e4, #0d9488); color: #042f2e; }
+.logro-nombre { font-size: 0.72rem; color: var(--tinta-suave); line-height: 1.3; }
+.logro.ok .logro-nombre { color: var(--tinta); }
+.ayuda-xp ul { margin: var(--esp-2) 0 0; padding-left: 1.1em; display: grid; gap: 6px; font-size: 0.875rem; color: var(--tinta-suave); }
+@media (min-width: 1024px) {
+  .habitos-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .logros { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  [data-mundo='accion'] .habitos-semana { max-width: none; }
+}
+
+/* XP flotante y celebración */
+.xp-flotante {
+  position: fixed;
+  z-index: 40;
+  transform: translate(-50%, -100%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(22 163 74 / 0.9);
+  color: #fff;
+  font: 800 0.875rem var(--fuente);
+  pointer-events: none;
+  animation: xp-sube 1.2s ease-out forwards;
+}
+@keyframes xp-sube { from { opacity: 0; margin-top: 0; } 15% { opacity: 1; } to { opacity: 0; margin-top: -48px; } }
+.celebracion {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--esp-5);
+  background: radial-gradient(70% 45% at 50% 40%, rgb(22 163 74 / 0.35), transparent 70%), rgb(5 11 8 / 0.94);
+  backdrop-filter: blur(6px);
+  animation: cel-entra 0.25s ease-out;
+}
+.celebracion.saliendo { opacity: 0; transition: opacity 0.2s; }
+@keyframes cel-entra { from { opacity: 0; } }
+.celebracion-confeti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.celebracion-confeti i { position: absolute; top: -20px; width: 8px; height: 14px; border-radius: 2px; animation: cel-cae linear infinite; }
+@keyframes cel-cae { to { transform: translateY(110vh) rotate(540deg); } }
+.celebracion-cuerpo { position: relative; display: grid; justify-items: center; gap: var(--esp-3); width: min(100%, 380px); text-align: center; }
+.celebracion-anillo { width: 168px; height: 168px; animation: cel-brillo 1.6s ease-in-out infinite alternate; }
+@keyframes cel-brillo { from { filter: drop-shadow(0 0 6px rgb(74 222 128 / 0.5)); } to { filter: drop-shadow(0 0 22px rgb(74 222 128 / 0.95)); } }
+.celebracion-anillo .pista { fill: none; stroke: rgb(255 255 255 / 0.08); stroke-width: 10; }
+.celebracion-anillo .lleno { fill: none; stroke: #4ade80; stroke-width: 10; stroke-linecap: round; }
+.celebracion-anillo .cifra { fill: var(--tinta); font: 800 20px var(--fuente); }
+.celebracion-anillo .sub { fill: #bbf7d0; font: 600 8px var(--fuente); }
+.celebracion h2 { font-size: 1.75rem; line-height: 1.15; }
+.celebracion-texto { color: #c8ced8; }
+.celebracion-texto strong { color: #fbbf24; }
+.celebracion-premios { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--esp-2); }
+.celebracion-premios span { padding: 8px 14px; border-radius: 999px; background: rgb(74 222 128 / 0.16); color: #bbf7d0; font-weight: 800; }
+.celebracion-endrick { display: flex; align-items: center; gap: var(--esp-3); width: 100%; padding: var(--esp-4); border-radius: 22px; background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.11); text-align: left; }
+.celebracion-endrick > div { display: grid; gap: 2px; font-size: 0.875rem; color: #c8ced8; }
+.celebracion-endrick strong { color: var(--tinta); }
+.avatar-mini { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #86efac, #15803d); color: #052e16; font-weight: 800; font-size: 1.25rem; }
+.celebracion-nivel { width: 100%; display: grid; gap: 8px; text-align: left; font-size: 0.8125rem; color: #b6bdc8; }
+@media (prefers-reduced-motion: reduce) {
+  .celebracion-anillo, .xp-flotante { animation: none; }
+  .barra-nivel i, .habito-anillo .lleno, .barra-habito i { transition: none; }
+}

@@ -9,6 +9,7 @@ import {
   hoy, lunesDe, sumarDias, diasDeLaSemana, diaCorto, etiquetaDia, rangoSemana, aFecha,
 } from './datos.js';
 import { abrirHojaTarea } from './hoja.js';
+import { pintarHabitosSemana, alClicHabitos } from './habitos.js';
 
 const ICONO_ANTERIOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
 const ICONO_SIGUIENTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
@@ -48,6 +49,7 @@ export async function montarSemana(contenedor) {
   };
 
   contenedor.addEventListener('click', async (e) => {
+    if (e.target.closest('.habitos-semana-caja') && (await alClicHabitos(e))) return;
     const b = e.target.closest('button');
     if (!b) return;
     const d = b.dataset;
@@ -188,6 +190,8 @@ function pintar(contenedor, datos) {
       ${esEstaSemana ? '' : '<button class="boton secundario boton-pequeno boton-hoy" type="button" data-semana="0">Volver a hoy</button>'}
     </div>
 
+    <div class="habitos-semana-caja">${contenedor.querySelector('.habitos-semana-caja')?.innerHTML || ''}</div>
+
     <div class="tira-dias" role="group" aria-label="Días de la semana">
       ${dias.map((d) => {
         const n = pendientes(d);
@@ -211,6 +215,8 @@ function pintar(contenedor, datos) {
     </section>`;
 
   if (desplazamiento != null) contenedor.querySelector('.tira-dias').scrollLeft = desplazamiento;
+  // Los hábitos de la semana se marcan el día que estás viendo (si ya ha llegado).
+  pintarHabitosSemana(contenedor.querySelector('.habitos-semana-caja'), { dia: visto.dia });
 }
 
 function columnaDia(d, datos, h) {

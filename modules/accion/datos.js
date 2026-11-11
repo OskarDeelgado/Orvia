@@ -4,36 +4,8 @@
 import { listar, crear, actualizar, archivar } from '../../core/db.js';
 import { listarAreas } from '../../core/areas.js';
 
-// ---------- Fechas (días como 'AAAA-MM-DD', en hora local) ----------
-const dosCifras = (n) => String(n).padStart(2, '0');
-export const aTexto = (d) => `${d.getFullYear()}-${dosCifras(d.getMonth() + 1)}-${dosCifras(d.getDate())}`;
-export const aFecha = (t) => new Date(+t.slice(0, 4), +t.slice(5, 7) - 1, +t.slice(8, 10));
-export const hoy = () => aTexto(new Date());
-export const sumarDias = (t, n) => { const d = aFecha(t); d.setDate(d.getDate() + n); return aTexto(d); };
-/** Lunes de la semana de un día. */
-export const lunesDe = (t) => { const d = aFecha(t); return sumarDias(t, -((d.getDay() + 6) % 7)); };
-export const diasDeLaSemana = (lunes) => [0, 1, 2, 3, 4, 5, 6].map((i) => sumarDias(lunes, i));
-
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-export const nombreDia = (t) => DIAS[aFecha(t).getDay()];
-export const diaCorto = (t) => DIAS[aFecha(t).getDay()].slice(0, 3);
-export const nombreMes = (t) => MESES[aFecha(t).getMonth()];
-/** "lunes 9 de noviembre", o "Hoy", "Mañana", "Ayer". */
-export function etiquetaDia(t, { relativo = true } = {}) {
-  const h = hoy();
-  if (relativo && t === h) return 'Hoy';
-  if (relativo && t === sumarDias(h, 1)) return 'Mañana';
-  if (relativo && t === sumarDias(h, -1)) return 'Ayer';
-  const d = aFecha(t);
-  return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
-}
-/** "9 – 15 de noviembre" o "30 nov – 6 dic". */
-export function rangoSemana(lunes) {
-  const a = aFecha(lunes), b = aFecha(sumarDias(lunes, 6));
-  if (a.getMonth() === b.getMonth()) return `${a.getDate()} – ${b.getDate()} de ${MESES[b.getMonth()]}`;
-  return `${a.getDate()} ${MESES[a.getMonth()].slice(0, 3)} – ${b.getDate()} ${MESES[b.getMonth()].slice(0, 3)}`;
-}
+import { hoy, sumarDias, lunesDe, diasDeLaSemana } from './fechas.js';
+export * from './fechas.js';
 
 // ---------- Lectura ----------
 const ordenTareas = (a, b) =>
@@ -97,3 +69,43 @@ export const eliminarTarea = (id) => archivar('tareas', id);
 
 /** Avisa a las pantallas de Acción (y al Panel) de que algo ha cambiado. */
 export const avisarCambio = () => dispatchEvent(new CustomEvent('orvia:accion'));
+
+// ---------- Hábitos (bloque 2; tablas del núcleo + supabase/004_habitos.sql) ----------
+
+export async function leerHabitos() {
+  const [habitos, registros, comodines, areas] = await Promise.all([
+    listar('habitos', { filtros: { activo: true }, orden: 'orden' }),
+    listar('habitos_registros', { orden: 'fecha' }),
+    listar('habitos_comodines'),
+    listarAreas(),
+  ]);
+  return { habitos, registros, comodines, areas, porArea: Object.fromEntries(areas.map((a) => [a.id, a])) };
+}
+
+export function crearHabito({ titulo, frecuencia, dificultad = 2, area_id = null, orden = 0 }) {
+  return crear('habitos', { titulo, frecuencia, dificultad, area_id, orden, activo: true, desde: lunesDe(hoy()) });
+}
+export const guardarHabito = (id, cambios) => actualizar('habitos', id, cambios);
+export const eliminarHabito = (id) => archivar('habitos', id);
+
+/**
+ * Marca o desmarca un día (hábito semanal) o guarda la cantidad del día (pasos).
+ * Un día tiene un único registro (único por hábito y fecha): se actualiza, nunca se duplica.
+ */
+export async function guardarDia(registros, habitoId, fecha, { hecho, valor = null }) {
+  const existente = registros.find((r) => r.habito_id === habitoId && r.fecha === fecha);
+  if (existente) return actualizar('habitos_registros', existente.id, { hecho, valor });
+  try {
+    return await crear('habitos_registros', { habito_id: habitoId, fecha, hecho, valor });
+  } catch (e) {
+    // Ya existía (por ejemplo, lo apuntó el atajo de pasos desde otro dispositivo): se actualiza.
+    if (e.original?.code !== '23505') throw e;
+    const [fila] = await listar('habitos_registros', { filtros: { habito_id: habitoId, fecha }, incluirArchivados: true });
+    return actualizar('habitos_registros', fila.id, { hecho, valor, archivado: false });
+  }
+}
+
+export const usarComodin = (habitoId, semana) => crear('habitos_comodines', { habito_id: habitoId, semana });
+
+/** Avisa a las pantallas de hábitos (y de la semana) de que algo ha cambiado. */
+export const avisarHabitos = () => dispatchEvent(new CustomEvent('orvia:accion'));

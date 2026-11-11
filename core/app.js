@@ -228,7 +228,11 @@ function pintarNuevaContrasena() {
 
 // ---------- Navegación ----------
 function rutaActual() {
-  return (location.hash.replace(/^#\/?/, '').split('/')[0] || '').toLowerCase();
+  return (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0] || '').toLowerCase();
+}
+/** Lo que va detrás del módulo: #/accion/habitos → 'habitos'. */
+function subRuta() {
+  return (location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[1] || '').toLowerCase();
 }
 
 // El botón "+" está siempre a mano. Si solo un módulo ofrece acción rápida, la hace
@@ -329,6 +333,20 @@ async function mostrarRuta() {
     id = '';
     setTimeout(() => ejecutarAccion(directa), 50);
   }
+  // Atajos que guardan un dato y abren una pantalla (por ejemplo, #/pasos?n=8432 desde la app Salud).
+  const conAtajo = MODULOS.find((m) => m.atajos?.[id]);
+  if (conAtajo) {
+    const params = new URLSearchParams(location.hash.split('?')[1] || '');
+    const atajo = conAtajo.atajos[id];
+    history.replaceState(null, '', location.pathname + '#/' + conAtajo.id);
+    id = conAtajo.id;
+    try {
+      const destino = await atajo(params);
+      if (destino) history.replaceState(null, '', location.pathname + destino);
+    } catch (e) {
+      aviso(e.message, { error: true });
+    }
+  }
   limpiarVista?.();
   limpiarVista = null;
   window.scrollTo(0, 0);
@@ -357,7 +375,7 @@ async function mostrarRuta() {
     const contenedor = pintarMundo({ id: modulo.id, titulo: modulo.nombre });
     raiz.querySelector('.mundo').append(botonMas());
     try {
-      await modulo.montar(contenedor, { sesion });
+      await modulo.montar(contenedor, { sesion, sub: subRuta() });
     } catch (e) {
       contenedor.innerHTML = `<p class="suave">No se pudo abrir ${escapar(modulo.nombre)}: ${escapar(e.message)}</p>`;
     }
