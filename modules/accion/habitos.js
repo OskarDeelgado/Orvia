@@ -452,8 +452,18 @@ export function abrirHojaHabito(habito) {
 // ---------- Atajo del iPhone: #/pasos?n=8432 ----------
 
 /** Guarda los pasos de un día (hoy por defecto) en el primer hábito de pasos. */
+// Cifra tal como la manda Atajos: «8432», «8.432», «8432,57», «8432.57», «8.432,5»…
+// Un separador seguido de 1 o 2 cifras al final es decimal; los demás son de miles.
+function leerCifra(texto) {
+  let t = String(texto || '').replace(/[^\d.,]/g, '');
+  const dec = t.match(/[.,](\d{1,2})$/);
+  if (dec) t = t.slice(0, -dec[0].length).replace(/[.,]/g, '') + '.' + dec[1];
+  else t = t.replace(/[.,]/g, '');
+  return t ? Math.round(Number(t)) : NaN;
+}
+
 export async function apuntarPasosDesdeAtajo(params) {
-  const n = Math.round(Number(String(params.get('n') || '').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.')));
+  const n = leerCifra(params.get('n'));
   const fecha = /^\d{4}-\d{2}-\d{2}$/.test(params.get('fecha') || '') ? params.get('fecha') : hoy();
   if (!(n >= 0)) throw new Error('El atajo no ha enviado una cifra de pasos');
   await cargar();
