@@ -2517,8 +2517,9 @@ button.an-fila { cursor: pointer; }
 }
 .dia-boton-nombre { font-size: 0.72rem; text-transform: capitalize; }
 .dia-boton-numero { font-size: 1.0625rem; font-weight: 700; color: var(--tinta); }
-.dia-boton-marca { height: 6px; }
-.dia-boton-marca i { display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--mundo-acento); }
+.dia-boton-marca { height: 6px; display: flex; gap: 3px; justify-content: center; }
+.dia-boton-marca i, .dia-boton-marca b { display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--mundo-acento); }
+.dia-boton-marca b { background: #93c5fd; }
 .dia-boton.es-hoy .dia-boton-numero { color: var(--mundo-acento); }
 .dia-boton[aria-pressed='true'] { border-color: var(--mundo-acento); background: color-mix(in srgb, var(--mundo-1) 30%, transparent); }
 .semana-dias { display: grid; gap: var(--esp-3); }
@@ -2981,3 +2982,64 @@ button.an-fila { cursor: pointer; }
 @media (min-width: 1024px) {
   .hitos { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); align-items: start; }
 }
+
+/* ---------- Acción: calendario del iPhone (bloque 4) ---------- */
+.semana-acciones { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--esp-2) var(--esp-4); }
+.semana-acciones:empty { display: none; }
+.enlace-calendario { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; }
+.enlace-calendario svg { width: 18px; height: 18px; }
+.invitar-calendario {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  padding: var(--esp-3) var(--esp-4);
+  margin-bottom: var(--esp-3);
+  flex-wrap: wrap;
+}
+.invitar-calendario > div:nth-child(2) { flex: 1 1 200px; }
+.invitar-calendario .suave { font-size: 0.8125rem; }
+.invitar-calendario-icono { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: rgb(147 197 253 / 0.14); color: #93c5fd; flex: none; }
+.invitar-calendario-icono svg { width: 22px; height: 22px; }
+.invitar-calendario-botones { display: flex; align-items: center; gap: var(--esp-3); }
+.aviso-calendario { margin: 0 0 var(--esp-3); padding: var(--esp-2) var(--esp-3); border-radius: 12px; background: rgb(245 165 36 / 0.1); color: #f5c46b; font-size: 0.8125rem; text-align: center; }
+
+.eventos-dia { list-style: none; margin: 0 0 var(--esp-2); padding: 0; display: grid; gap: 4px; }
+.evento {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: var(--esp-2);
+  padding: 7px 10px 7px 12px;
+  border: 0;
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.evento:hover { background: color-mix(in srgb, var(--c) 18%, transparent); }
+.evento:focus-visible { outline: 2px solid var(--c); outline-offset: 1px; }
+.evento-hora { flex: none; font-size: 0.75rem; font-weight: 700; color: var(--c); font-variant-numeric: tabular-nums; }
+.evento-titulo { min-width: 0; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.evento.todo-el-dia { background: color-mix(in srgb, var(--c) 22%, transparent); }
+@media (min-width: 1024px) {
+  .evento { flex-direction: column; gap: 0; padding: 5px 8px 5px 9px; }
+  .evento-titulo { white-space: normal; font-size: 0.8125rem; line-height: 1.3; }
+  .evento-hora { font-size: 0.6875rem; }
+}
+
+.evento-detalle { display: grid; gap: var(--esp-3); }
+.evento-cuando { font-size: 1.0625rem; font-weight: 600; }
+.evento-calendario { display: flex; align-items: center; gap: var(--esp-2); }
+.lista-calendarios { list-style: none; margin: 0 0 var(--esp-3); padding: 0; display: grid; gap: 2px; }
+.lista-calendarios li { display: flex; align-items: center; gap: var(--esp-3); min-height: 48px; border-bottom: 1px solid var(--linea-suave); }
+.lista-calendarios-nombre { flex: 1; font-weight: 600; }
+.calendario-intro { margin-bottom: var(--esp-3); color: var(--tinta-suave); }
+.calendario-pasos { margin-top: var(--esp-4); padding: var(--esp-3) var(--esp-4); border-radius: 14px; background: var(--cristal); border: 1px solid var(--cristal-linea); }
+.calendario-pasos summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.calendario-pasos ol { margin: var(--esp-2) 0 var(--esp-3); padding-left: 1.3em; display: grid; gap: 6px; }
+.calendario-pasos svg { width: 16px; height: 16px; vertical-align: -3px; }
+.chip-color { width: 40px; height: 40px; border-radius: 50%; border: 2px solid transparent; background: var(--c); cursor: pointer; box-shadow: inset 0 0 0 3px var(--superficie); }
+.chip-color[aria-pressed='true'] { border-color: var(--tinta); }

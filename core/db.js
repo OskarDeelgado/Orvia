@@ -14,7 +14,7 @@ export const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE
   },
 });
 
-// Todas las tablas: núcleo (001), Finanzas (002) y comodines de hábitos (004) e hitos de proyectos (005). La copia de seguridad las incluye todas.
+// Todas las tablas: núcleo (001), Finanzas (002), comodines de hábitos (004), hitos (005) y calendarios (006). La copia de seguridad las incluye todas.
 export const TABLAS = [
   'areas',
   'objetivos',
@@ -24,6 +24,7 @@ export const TABLAS = [
   'habitos_registros',
   'habitos_comodines',
   'hitos',
+  'calendarios',
   'notas',
   'enlaces',
   'fin_config',
@@ -112,6 +113,20 @@ export async function contar(tabla) {
 /** Ejecuta una función de la base de datos (por ejemplo, fin_importar). */
 export async function llamar(funcion, argumentos = {}) {
   return comprobar(await cliente.rpc(funcion, argumentos), 'completar la operación');
+}
+
+/** Llama a una función del servidor (Supabase Edge Functions), con tu sesión. */
+export async function invocar(funcion, cuerpo = {}) {
+  const { data, error } = await cliente.functions.invoke(funcion, { body: cuerpo });
+  if (error) {
+    let detalle = error.message;
+    try { detalle = (await error.context.json()).error || detalle; } catch { /* sin cuerpo */ }
+    const e = new Error(detalle);
+    e.original = error;
+    e.estado = error.context?.status;
+    throw e;
+  }
+  return data;
 }
 
 // Copia completa de todos tus datos, incluidos los archivados.

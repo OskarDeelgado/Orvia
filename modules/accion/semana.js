@@ -10,9 +10,11 @@ import {
 } from './datos.js';
 import { abrirHojaTarea } from './hoja.js';
 import { pintarHabitosSemana, alClicHabitos } from './habitos.js';
+import { leerEventos, eventosPorDia, horaDe, abrirHojaEvento, abrirHojaCalendarios, tieneCalendarios } from './calendario.js';
 
 const ICONO_ANTERIOR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
 const ICONO_SIGUIENTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const ICONO_CALENDARIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.4" fill="currentColor"/></svg>';
 const ICONO_NOTA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"/></svg>';
 
 // Semana y día que estás viendo (se conservan al volver a Acción).
@@ -26,13 +28,25 @@ export async function montarSemana(contenedor) {
   visto.vista = contenedor;
   let datos = null;
 
+  // Primero las tareas; los eventos del calendario llegan después (vienen de iCloud y tardan más).
+  let eventos = { lunes: null, lista: [], errores: [] };
   const cargar = async () => {
+    const lunes = visto.lunes;
     try {
-      datos = await leerSemana(visto.lunes);
+      datos = await leerSemana(lunes);
+      if (eventos.lunes === lunes) datos.eventos = eventos;
       if (contenedor.isConnected) pintar(contenedor, datos);
     } catch (e) {
       contenedor.innerHTML = `<p class="error">${escapar(e.message)}</p>`;
+      return;
     }
+    try {
+      const r = await leerEventos(lunes, sumarDias(lunes, 7));
+      eventos = { lunes, lista: r.eventos, errores: r.errores, calendarios: r.calendarios };
+    } catch (e) {
+      eventos = { lunes, lista: [], errores: [{ mensaje: e.message }] };
+    }
+    if (datos.lunes === lunes && contenedor.isConnected) { datos.eventos = eventos; pintar(contenedor, datos); }
   };
   contenedor.innerHTML = `<p class="suave">Cargando tu semana…</p>`;
   await cargar();
@@ -79,6 +93,17 @@ export async function montarSemana(contenedor) {
         aviso(err.message, { error: true });
         avisarCambio();
       }
+      return;
+    }
+    if (d.evento) {
+      const ev = datos?.eventos?.lista.find((x) => x.id === d.evento);
+      if (ev) abrirHojaEvento(ev);
+      return;
+    }
+    if (d.calendarios != null) return abrirHojaCalendarios();
+    if (d.ocultarCalendario != null) {
+      try { localStorage.setItem('orvia-sin-calendario', '1'); } catch { /* sin almacenamiento */ }
+      pintar(contenedor, datos);
       return;
     }
     if (d.tarea) {
@@ -176,6 +201,23 @@ function pintar(contenedor, datos) {
   const totalSemana = dias.reduce((a, d) => a + datos.dias[d].length, 0);
   const hechasSemana = dias.reduce((a, d) => a + datos.dias[d].filter((t) => t.estado === 'hecha').length, 0);
   const desplazamiento = contenedor.querySelector('.tira-dias')?.scrollLeft;
+  const ev = datos.eventos;
+  datos.eventosDia = eventosPorDia(ev?.lista || [], dias);
+  const conCalendario = tieneCalendarios() === true;
+  let ocultoInvitar = false;
+  try { ocultoInvitar = localStorage.getItem('orvia-sin-calendario') === '1'; } catch { /* sin almacenamiento */ }
+  const avisoCalendario = ev?.errores?.length
+    ? `<p class="aviso-calendario" role="status">${escapar(ev.errores[0].nombre ? `${ev.errores[0].nombre}: ${ev.errores[0].mensaje}` : ev.errores[0].mensaje)} · <button class="enlace" type="button" data-calendarios>Revisar</button></p>`
+    : tieneCalendarios() === false && !ocultoInvitar
+      ? `<section class="cristal invitar-calendario">
+          <span class="invitar-calendario-icono" aria-hidden="true">${ICONO_CALENDARIO}</span>
+          <div><strong>Ve aquí tu calendario del iPhone</strong><p class="suave">Tus eventos, junto a tus tareas. Orvia solo los lee.</p></div>
+          <div class="invitar-calendario-botones">
+            <button class="boton boton-pequeno" type="button" data-calendarios>Conectar</button>
+            <button class="enlace" type="button" data-ocultar-calendario>Ahora no</button>
+          </div>
+        </section>`
+      : '';
 
   contenedor.innerHTML = `
         <div class="semana-cabecera">
@@ -187,18 +229,22 @@ function pintar(contenedor, datos) {
         </div>
         <button class="boton-icono" type="button" data-semana="1" aria-label="Semana siguiente">${ICONO_SIGUIENTE}</button>
       </div>
-      ${esEstaSemana ? '' : '<button class="boton secundario boton-pequeno boton-hoy" type="button" data-semana="0">Volver a hoy</button>'}
+      <div class="semana-acciones">
+        ${esEstaSemana ? '' : '<button class="boton secundario boton-pequeno boton-hoy" type="button" data-semana="0">Volver a hoy</button>'}
+        ${conCalendario ? `<button class="enlace enlace-calendario" type="button" data-calendarios>${ICONO_CALENDARIO}Tu calendario</button>` : ''}
+      </div>
     </div>
+    ${avisoCalendario}
 
     <div class="habitos-semana-caja">${contenedor.querySelector('.habitos-semana-caja')?.innerHTML || ''}</div>
 
     <div class="tira-dias" role="group" aria-label="Días de la semana">
       ${dias.map((d) => {
         const n = pendientes(d);
-        return `<button type="button" class="dia-boton${d === h ? ' es-hoy' : ''}" data-ver-dia="${d}" aria-pressed="${d === visto.dia}" aria-label="${escapar(etiquetaDia(d, { relativo: false }))}${n ? `, ${n} pendientes` : ''}">
+        return `<button type="button" class="dia-boton${d === h ? ' es-hoy' : ''}" data-ver-dia="${d}" aria-pressed="${d === visto.dia}" aria-label="${escapar(etiquetaDia(d, { relativo: false }))}${n ? `, ${n} pendientes` : ''}${datos.eventosDia[d]?.length ? `, ${datos.eventosDia[d].length} en el calendario` : ''}">
           <span class="dia-boton-nombre">${diaCorto(d)}</span>
           <span class="dia-boton-numero">${aFecha(d).getDate()}</span>
-          <span class="dia-boton-marca">${n ? '<i></i>' : ''}</span>
+          <span class="dia-boton-marca">${n ? '<i></i>' : ''}${datos.eventosDia[d]?.length ? '<b></b>' : ''}</span>
         </button>`;
       }).join('')}
     </div>
@@ -224,6 +270,7 @@ function columnaDia(d, datos, h) {
   const pasadoPendiente = d < h ? datos.dias[d].filter((t) => t.estado !== 'hecha').length : 0;
   const tareas = d < h ? datos.dias[d].filter((t) => t.estado === 'hecha') : datos.dias[d];
   const atrasadas = d === h ? datos.atrasadas : [];
+  const eventosDia = datos.eventosDia?.[d] || [];
   const titulo = etiquetaDia(d);
   const subtitulo = ['Hoy', 'Mañana', 'Ayer'].includes(titulo) ? etiquetaDia(d, { relativo: false }) : '';
   return `
@@ -235,6 +282,7 @@ function columnaDia(d, datos, h) {
       <header class="dia-columna-cabecera-corta" aria-hidden="true">
         <strong>${diaCorto(d)} ${aFecha(d).getDate()}</strong>${subtitulo ? `<span class="etiqueta-dia">${escapar(titulo)}</span>` : ''}
       </header>
+      ${eventosDia.length ? `<ul class="eventos-dia" aria-label="Calendario">${eventosDia.map(filaEvento).join('')}</ul>` : ''}
       ${atrasadas.length ? `
         <div class="atrasadas">
           <div class="titulo-con-enlace"><strong>Atrasadas</strong><button class="enlace" type="button" data-a-hoy>Pasar a hoy</button></div>
@@ -242,7 +290,7 @@ function columnaDia(d, datos, h) {
         </div>` : ''}
       <ul class="lista-tareas">${tareas.map((t) => filaTarea(t, datos)).join('')}</ul>
       ${pasadoPendiente ? `<p class="suave vacio-dia">${pasadoPendiente === 1 ? 'Lo pendiente está' : 'Lo pendiente está'} en «Atrasadas», en hoy</p>`
-        : !tareas.length && !atrasadas.length ? `<p class="suave vacio-dia">${d < h ? 'Sin tareas' : 'Nada por ahora'}</p>` : ''}
+        : !tareas.length && !atrasadas.length && !eventosDia.length ? `<p class="suave vacio-dia">${d < h ? 'Sin tareas' : 'Nada por ahora'}</p>` : ''}
       ${formAnadir(d, 'Añadir tarea')}
     </section>`;
 }
@@ -264,6 +312,12 @@ function filaTarea(t, datos, { conFecha = false } = {}) {
       </button>
     </li>`;
 }
+
+const filaEvento = (e) => `
+  <li><button type="button" class="evento${e.todoElDia ? ' todo-el-dia' : ''}" data-evento="${escapar(e.id)}" style="--c:${escapar(e.color || '#7aa2f7')}">
+    <span class="evento-hora">${escapar(horaDe(e))}</span>
+    <span class="evento-titulo">${escapar(e.titulo)}</span>
+  </button></li>`;
 
 const formAnadir = (fecha, texto) => `
   <form class="anadir-rapido" data-anadir="${fecha}" autocomplete="off">

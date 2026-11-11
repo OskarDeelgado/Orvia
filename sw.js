@@ -3,7 +3,7 @@
 // conexión, la copia guardada. Las llamadas a Supabase no se tocan nunca.
 // Al cambiar archivos de la carcasa, sube VERSION para refrescar la caché.
 
-const VERSION = 'orvia-v19';
+const VERSION = 'orvia-v20';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -51,6 +51,7 @@ const ARCHIVOS = [
   'modules/accion/celebracion.js',
   'modules/accion/nav.js',
   'modules/accion/proyectos.js',
+  'modules/accion/calendario.js',
   'core/ui/hoja.js',
   'modules/cerebro/index.js',
   'vendor/supabase.js',
