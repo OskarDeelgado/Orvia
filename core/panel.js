@@ -117,8 +117,8 @@ function fichaAgente(m, { comoEnlace }) {
       <span class="agente-pie"><span class="chip" style="--c:${a.color}">${escapar(m.nombre)}</span><span class="agente-situacion">${escapar(a.situacion)}</span></span>
     </span>`;
   return comoEnlace
-    ? `<a class="agente" href="#/${m.id}" data-mundo="${m.id}" aria-label="${escapar(`${a.nombre}, ${a.puesto}. Abrir ${m.nombre}`)}">${contenido}<span class="agente-flecha" aria-hidden="true">›</span></a>`
-    : `<button class="agente" type="button" data-sala="${m.id}" aria-pressed="false">${contenido}</button>`;
+    ? `<a class="agente" href="#/${m.id}" data-mundo="${m.id}" style="--c:${a.color}" aria-label="${escapar(`${a.nombre}, ${a.puesto}. Abrir ${m.nombre}`)}">${contenido}<span class="agente-flecha" aria-hidden="true">›</span></a>`
+    : `<button class="agente" type="button" data-sala="${m.id}" style="--c:${a.color}" aria-pressed="false">${contenido}</button>`;
 }
 
 /** Panel ligero del móvil. */
@@ -163,12 +163,12 @@ function pintarPanelMovil(raiz, { nombre }) {
 /** Oficina 3D con sus fichas debajo (Panel del ordenador o #/oficina en el móvil). */
 function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
   const fichaTuya = `
-    <button class="agente" type="button" data-sala="direccion" aria-pressed="false">
-      ${avatar((nombre || 'Tú').charAt(0), '#8ab4ff')}
+    <button class="agente" type="button" data-sala="direccion" aria-pressed="false" style="--c:#4d8dff">
+      ${avatar((nombre || 'Tú').charAt(0), '#4d8dff')}
       <span class="agente-texto">
         <span class="agente-nombre">${escapar(nombre || 'Tu despacho')}</span>
         <span class="agente-puesto">Director general</span>
-        <span class="agente-pie"><span class="chip" style="--c:#8ab4ff">Dirección</span><span class="agente-situacion">Tus datos clave</span></span>
+        <span class="agente-pie"><span class="chip" style="--c:#4d8dff">Dirección</span><span class="agente-situacion">Tus datos clave</span></span>
       </span>
     </button>`;
 

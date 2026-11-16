@@ -1,22 +1,35 @@
-// Oficina 3D: el Panel de Orvia en el ordenador (y, a petición, en el móvil).
-// Cada módulo es un despacho con su agente. Un toque acerca la cámara;
-// un segundo toque (o el botón de la ficha) abre el módulo.
+// Oficina 3D de Orvia: el Panel en el ordenador (y, a petición, en el móvil).
+// La azotea de una torre sobre una ciudad al anochecer: tu despacho es el núcleo, en el centro, y
+// cada departamento es una plataforma redonda a distinta altura, unida al núcleo por un
+// puente de luz. Un toque acerca la cámara; un segundo toque (o el botón de la ficha)
+// abre el módulo.
 // La librería 3D se carga solo cuando se muestra la oficina.
 // Al salir, destruir() libera la tarjeta gráfica y para la animación.
 
 import { escapar } from './ui/componentes.js';
 
-// Distribución fija para tres módulos (abajo), tu despacho y el café (arriba).
-// Si se añade un cuarto módulo, hay que ampliar esta distribución.
+// Distribución en órbita alrededor del núcleo: ángulo (grados, 0 = hacia la cámara),
+// distancia al centro y altura de cada plataforma. Si se añade un cuarto módulo, se añade aquí.
+const ORBITA = 10.4;
 const HUECOS_MODULOS = [
-  { x: -8, z: 4.75 },
-  { x: 0, z: 4.75 },
-  { x: 8, z: 4.75 },
+  { angulo: -74, altura: 1.0 },
+  { angulo: 0, altura: 0.35 },
+  { angulo: 74, altura: 1.45 },
 ];
+const enOrbita = (angulo, distancia = ORBITA) => {
+  const a = (angulo * Math.PI) / 180;
+  return { x: Math.sin(a) * distancia, z: Math.cos(a) * distancia };
+};
 
 export async function montarOficina(escena, { modulos, nombreUsuario, datos, alAbrirModulo }) {
   const THREE = await import('../vendor/three/three.module.min.js');
   const { OrbitControls } = await import('../vendor/three/OrbitControls.js');
+  // Brillo de las luces (solo en el ordenador: en el móvil se ahorra batería)
+  const conBrillo = !matchMedia('(pointer: coarse)').matches;
+  const post = conBrillo ? await Promise.all([
+    import('../vendor/three/EffectComposer.js'), import('../vendor/three/RenderPass.js'),
+    import('../vendor/three/UnrealBloomPass.js'), import('../vendor/three/OutputPass.js'),
+  ]).catch(() => null) : null;
 
   const reducirMovimiento = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const esMovil = matchMedia('(pointer: coarse)').matches;
@@ -24,14 +37,14 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   const SALAS = [
     { id: 'direccion', nombre: nombreUsuario || 'Tu despacho', puesto: 'Director general', area: 'Dirección', situacion: 'Tu despacho',
       tarea: 'Desde aquí ves cómo va todo: en la pantalla de la pared, los datos clave de cada área.',
-      color: '#8ab4ff', x: -5, z: -4.75, w: 14, d: 6.5, lado: 'arriba', tipo: 'direccion' },
+      color: '#4d8dff', x: 0, z: -0.6, angulo: 180, altura: 0.6, radio: 4.8, tipo: 'direccion' },
     ...modulos.slice(0, 3).map((m, i) => ({
       id: m.id, nombre: m.agente.nombre, puesto: m.agente.puesto, area: m.nombre, situacion: m.agente.situacion,
-      tarea: m.agente.tarea, color: m.agente.color, ...HUECOS_MODULOS[i], w: 8, d: 6.5, lado: 'abajo', tipo: 'agente', modulo: m,
+      tarea: m.agente.tarea, color: m.agente.color, ...HUECOS_MODULOS[i], ...enOrbita(HUECOS_MODULOS[i].angulo), radio: 3.7, tipo: 'agente', modulo: m,
     })),
     { id: 'cafe', nombre: 'Zona de café', puesto: 'Espacio común', area: 'Común', situacion: 'Abierta',
       tarea: 'Un rincón para desconectar entre tarea y tarea.',
-      color: '#e0a96d', x: 7, z: -4.75, w: 10, d: 6.5, lado: 'arriba', tipo: 'cafe' },
+      color: '#ff9a62', angulo: 180, altura: 0.25, ...enOrbita(148, 9.4), radio: 2.9, tipo: 'cafe' },
   ];
 
   // ---------- Capas de interfaz sobre la escena ----------
@@ -47,23 +60,24 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
 
   // ---------- Motor ----------
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, esMovil ? 1.75 : 2));
+  // Con brillo, la resolución se limita un poco para que vaya fluido en portátiles
+  renderer.setPixelRatio(Math.min(devicePixelRatio, esMovil ? 1.75 : post ? 1.5 : 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.1;
   renderer.domElement.className = 'oficina-lienzo';
   renderer.domElement.setAttribute('role', 'img');
   renderer.domElement.setAttribute('aria-label', 'Oficina en 3D. Usa las fichas del equipo para entrar en cada despacho.');
   escena.prepend(renderer.domElement);
 
   const mundo = new THREE.Scene();
-  mundo.background = new THREE.Color('#0b0c0f');
-  mundo.fog = new THREE.Fog('#0b0c0f', 38, 75);
+  mundo.background = new THREE.Color('#0d1838');
+  mundo.fog = new THREE.FogExp2('#111d44', 0.0115);
 
   const camara = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
-  const VISTA_ANCHA = { pos: new THREE.Vector3(0, 24, 19), obj: new THREE.Vector3(0, 0, 0.5) };
-  const VISTA_ALTA = { pos: new THREE.Vector3(19, 30, 0.5), obj: new THREE.Vector3(0, 0, 0.5) };
+  const VISTA_ANCHA = { pos: new THREE.Vector3(0, 17, 29), obj: new THREE.Vector3(0, 0.6, 0.6) };
+  const VISTA_ALTA = { pos: new THREE.Vector3(0, 33, 14), obj: new THREE.Vector3(0, 0, 1) };
   let vistaGeneral = VISTA_ANCHA;
   camara.position.copy(vistaGeneral.pos);
 
@@ -72,19 +86,29 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   controles.enableDamping = true;
   controles.dampingFactor = 0.08;
   controles.minDistance = 7;
-  controles.maxDistance = 42;
+  controles.maxDistance = 52;
   controles.minPolarAngle = 0.12;
   controles.maxPolarAngle = 1.22;
   controles.enablePan = !esMovil;
   controles.rotateSpeed = esMovil ? 0.7 : 0.9;
   controles.update();
 
-  mundo.add(new THREE.HemisphereLight('#9db8ff', '#0e0f12', 0.9));
-  const sol = new THREE.DirectionalLight('#fff4e6', 2.4);
-  sol.position.set(-12, 22, 10);
+  let compositor = null, brillo = null;
+  if (post) {
+    const [{ EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = post;
+    compositor = new EffectComposer(renderer);
+    compositor.addPass(new RenderPass(mundo, camara));
+    brillo = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.58, 0.5, 0.86);
+    compositor.addPass(brillo);
+    compositor.addPass(new OutputPass());
+  }
+
+  mundo.add(new THREE.HemisphereLight('#8fa8ff', '#0a1020', 1.05));
+  const sol = new THREE.DirectionalLight('#e6eeff', 2.3);
+  sol.position.set(-10, 24, 12);
   sol.castShadow = true;
   sol.shadow.mapSize.set(esMovil ? 1024 : 2048, esMovil ? 1024 : 2048);
-  Object.assign(sol.shadow.camera, { left: -16, right: 16, top: 12, bottom: -12, near: 1, far: 60 });
+  Object.assign(sol.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 70 });
   sol.shadow.bias = -0.0005;
   mundo.add(sol);
 
@@ -94,18 +118,18 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
 
   const mat = (color, extra = {}) => apuntar(new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.05, ...extra }));
   const MAT = {
-    base: mat('#111318', { roughness: 0.9 }),
-    pasillo: mat('#14171d', { roughness: 0.85 }),
-    mueble: mat('#2b2f38', { roughness: 0.55 }),
-    muebleClaro: mat('#3a3f4a', { roughness: 0.5 }),
-    pata: mat('#1b1e24', { metalness: 0.5, roughness: 0.4 }),
-    silla: mat('#22252d', { roughness: 0.6 }),
+    base: mat('#0a0e17', { roughness: 0.55, metalness: 0.35 }),
+    zocalo: mat('#0c1220', { roughness: 0.4, metalness: 0.6 }),
+    mueble: mat('#1f2533', { roughness: 0.45, metalness: 0.15 }),
+    muebleClaro: mat('#2c3446', { roughness: 0.4, metalness: 0.2 }),
+    pata: mat('#141a26', { metalness: 0.7, roughness: 0.3 }),
+    silla: mat('#1a2030', { roughness: 0.55 }),
     piel: mat('#d9b08c', { roughness: 0.65 }),
     pelo: mat('#2a1f1a', { roughness: 0.8 }),
     pantalon: mat('#1e2230'),
     maceta: mat('#2f333c', { roughness: 0.6 }),
     hoja: mat('#3f8f5e', { roughness: 0.8, flatShading: true }),
-    marcoMonitor: mat('#15171c', { roughness: 0.4, metalness: 0.3 }),
+    marcoMonitor: mat('#0b0f18', { roughness: 0.35, metalness: 0.5 }),
     blanco: mat('#f2f4f7'),
   };
   const geo = (g) => apuntar(g);
@@ -118,15 +142,122 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     return m;
   }
 
-  mundo.add(caja(28.5, 0.5, 20.5, MAT.base, 0, -0.25, 0, false));
-  const borde = new THREE.LineSegments(
-    geo(new THREE.EdgesGeometry(geo(new THREE.BoxGeometry(28.5, 0.5, 20.5)))),
-    apuntar(new THREE.LineBasicMaterial({ color: '#8ab4ff', transparent: true, opacity: 0.35 })),
-  );
-  borde.position.y = -0.25;
-  mundo.add(borde);
-  mundo.add(caja(26, 0.03, 3, MAT.pasillo, 0, 0.015, 0, false));
-  mundo.add(caja(24, 0.01, 0.06, apuntar(new THREE.MeshBasicMaterial({ color: '#8ab4ff', transparent: true, opacity: 0.5 })), 0, 0.04, 0, false));
+  // ---------- Suelo: un disco oscuro con anillos y radios de luz que se pierden en la niebla ----------
+  {
+    const c = document.createElement('canvas');
+    c.width = c.height = 1024;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#05080f';
+    ctx.fillRect(0, 0, 1024, 1024);
+    ctx.translate(512, 512);
+    for (let r = 1; r <= 13; r++) {
+      ctx.strokeStyle = `rgba(90,140,255,${r % 4 === 0 ? 0.32 : 0.11})`;
+      ctx.lineWidth = r % 4 === 0 ? 2.2 : 1.2;
+      ctx.beginPath(); ctx.arc(0, 0, r * 38, 0, Math.PI * 2); ctx.stroke();
+    }
+    for (let i = 0; i < 48; i++) {
+      const a = (i / 48) * Math.PI * 2;
+      ctx.strokeStyle = `rgba(90,140,255,${i % 6 === 0 ? 0.16 : 0.06})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.cos(a) * 60, Math.sin(a) * 60); ctx.lineTo(Math.cos(a) * 500, Math.sin(a) * 500); ctx.stroke();
+    }
+    const tex = apuntar(new THREE.CanvasTexture(c));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    const suelo = new THREE.Mesh(geo(new THREE.CircleGeometry(18.5, 96)), apuntar(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.4 })));
+    suelo.rotation.x = -Math.PI / 2;
+    suelo.receiveShadow = true;
+    mundo.add(suelo);
+    // La azotea es la cima de una torre: su canto se ilumina y el cuerpo baja hasta la ciudad
+    const torre = new THREE.Mesh(geo(new THREE.CylinderGeometry(18.5, 16, 70, 96, 1, true)), apuntar(new THREE.MeshStandardMaterial({ color: '#0a1124', roughness: 0.4, metalness: 0.6 })));
+    torre.position.y = -35.01;
+    mundo.add(torre);
+    const canto = new THREE.Mesh(geo(new THREE.TorusGeometry(18.5, 0.06, 8, 160)), apuntar(new THREE.MeshBasicMaterial({ color: '#6aa2ff', toneMapped: false })));
+    canto.rotation.x = -Math.PI / 2;
+    mundo.add(canto);
+  }
+
+  // ---------- Cielo y ciudad al anochecer ----------
+  {
+    // Cúpula de cielo con degradado: horizonte violeta azulado, cénit casi negro
+    const cielo = new THREE.SphereGeometry(320, 32, 16);
+    const colores = [];
+    const alto = new THREE.Color('#050a1c'), medio = new THREE.Color('#14214e'), horizonte = new THREE.Color('#3a3f86');
+    const pos = cielo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const k = THREE.MathUtils.clamp(pos.getY(i) / 320, -1, 1);
+      const c = k > 0.12 ? medio.clone().lerp(alto, Math.min(1, (k - 0.12) / 0.6)) : horizonte.clone().lerp(medio, Math.max(0, (k + 0.05) / 0.17));
+      colores.push(c.r, c.g, c.b);
+    }
+    cielo.setAttribute('color', new THREE.Float32BufferAttribute(colores, 3));
+    mundo.add(new THREE.Mesh(geo(cielo), apuntar(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }))));
+
+    // Fachadas con ventanas encendidas (una textura que se repite)
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#060a16';
+    ctx.fillRect(0, 0, 128, 256);
+    const tonos = ['#ffd58a', '#ffe7b8', '#9fd0ff', '#48e2ff', '#c9d8ff'];
+    for (let y = 6; y < 250; y += 12) for (let x = 6; x < 124; x += 10) {
+      if (Math.random() < 0.34) { ctx.globalAlpha = 0.35 + Math.random() * 0.65; ctx.fillStyle = tonos[Math.floor(Math.random() * tonos.length)]; ctx.fillRect(x, y, 5, 7); }
+    }
+    ctx.globalAlpha = 1;
+    const ventanas = apuntar(new THREE.CanvasTexture(c));
+    ventanas.colorSpace = THREE.SRGBColorSpace;
+    ventanas.wrapS = ventanas.wrapT = THREE.RepeatWrapping;
+    const fachada = apuntar(new THREE.MeshStandardMaterial({ color: '#0b1226', roughness: 0.6, metalness: 0.3, emissive: '#ffffff', emissiveMap: ventanas, emissiveIntensity: 0.75 }));
+    // Cuatro tipos de edificio; las ventanas mantienen su tamaño en todos
+    const tipos = [[7, 40], [10, 60], [12, 85], [6, 110]].map(([w, h]) => {
+      const g = geo(new THREE.BoxGeometry(w, h, w));
+      const uv = g.attributes.uv, n = g.attributes.normal;
+      for (let i = 0; i < uv.count; i++) {
+        if (Math.abs(n.getY(i)) > 0.5) uv.setXY(i, 0.01, 0.01); // azoteas oscuras
+        else uv.setXY(i, uv.getX(i) * (w / 6), uv.getY(i) * (h / 12));
+      }
+      g.translate(0, h / 2, 0);
+      return g;
+    });
+    const total = esMovil ? 220 : 480;
+    const porTipo = tipos.map(() => []);
+    let semilla = 11;
+    const azar = () => ((semilla = (semilla * 9301 + 49297) % 233280) / 233280);
+    for (let i = 0; i < total; i++) {
+      const r = 26 + Math.pow(azar(), 0.8) * 150, a = azar() * Math.PI * 2;
+      const tipo = Math.floor(azar() * tipos.length);
+      // La azotea es lo más alto: cerca, los edificios quedan muy por debajo; a lo lejos asoma algún rascacielos
+      const cima = r < 60 ? -26 + azar() * 16 : r < 110 ? -18 + azar() * 22 : -10 + azar() * (azar() < 0.15 ? 52 : 26);
+      porTipo[tipo].push({ x: Math.cos(a) * r, z: Math.sin(a) * r, giro: azar() * Math.PI, escala: 0.8 + azar() * 0.45, cima });
+    }
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Vector3(), p = new THREE.Vector3();
+    tipos.forEach((g, t) => {
+      const lista = porTipo[t];
+      const inst = new THREE.InstancedMesh(g, fachada, lista.length);
+      lista.forEach((b, i) => {
+        // Los cercanos quedan por debajo de la azotea; los lejanos asoman por el horizonte
+        const base = b.cima - [40, 60, 85, 110][t] * b.escala;
+        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), b.giro);
+        e.set(b.escala, b.escala, b.escala);
+        p.set(b.x, base, b.z);
+        inst.setMatrixAt(i, m4.compose(p, q, e));
+      });
+      mundo.add(inst);
+    });
+  }
+
+  // Polvo de luz flotando (se queda quieto con «Reducir movimiento»)
+  const polvo = (() => {
+    const n = esMovil ? 140 : 320, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const r = 3 + Math.random() * 20, a = Math.random() * Math.PI * 2;
+      pos.set([Math.cos(a) * r, 0.4 + Math.random() * 7, Math.sin(a) * r], i * 3);
+    }
+    const g = geo(new THREE.BufferGeometry());
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const pts = new THREE.Points(g, apuntar(new THREE.PointsMaterial({ color: '#7fb0ff', size: 0.06, transparent: true, opacity: 0.55, depthWrite: false })));
+    mundo.add(pts);
+    return pts;
+  })();
 
   // ---------- Pantallas y carteles (dibujados en un lienzo) ----------
   const lienzo = (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h });
@@ -146,25 +277,39 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     return t;
   }
 
+  // Etiqueta holográfica de cada plataforma: cristal oscuro, línea de luz del departamento.
   function cartel(sala) {
     const c = lienzo(640, 200), ctx = c.getContext('2d');
-    redondeado(ctx, 6, 6, 628, 188, 36);
-    ctx.fillStyle = 'rgba(14,15,18,0.88)';
+    redondeado(ctx, 8, 8, 624, 184, 30);
+    const fondo = ctx.createLinearGradient(0, 0, 0, 200);
+    fondo.addColorStop(0, 'rgba(18,26,44,0.92)');
+    fondo.addColorStop(1, 'rgba(6,9,16,0.92)');
+    ctx.fillStyle = fondo;
     ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = sala.color;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(160,185,255,0.28)';
     ctx.stroke();
+    // Línea de luz superior en el color del departamento
+    const linea = ctx.createLinearGradient(40, 0, 600, 0);
+    linea.addColorStop(0, 'rgba(0,0,0,0)');
+    linea.addColorStop(0.5, sala.color);
+    linea.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = linea;
+    ctx.fillRect(60, 9, 520, 4);
+    ctx.shadowColor = sala.color;
+    ctx.shadowBlur = 22;
     ctx.fillStyle = sala.color;
-    ctx.beginPath(); ctx.arc(62, 100, 18, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f2f4f7';
-    ctx.font = '800 64px Manrope, system-ui, sans-serif';
-    ctx.fillText(sala.nombre, 104, 96);
-    ctx.fillStyle = '#b5bcc8';
-    ctx.font = '600 40px Manrope, system-ui, sans-serif';
-    ctx.fillText(sala.tipo === 'cafe' ? sala.puesto : `${sala.puesto} · ${sala.area}`, 104, 150);
+    ctx.beginPath(); ctx.arc(64, 100, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#eef3fc';
+    ctx.font = '600 62px Geist, system-ui, sans-serif';
+    ctx.fillText(sala.nombre, 104, 96, 500);
+    ctx.fillStyle = '#9fb0c8';
+    ctx.font = '400 38px Geist, system-ui, sans-serif';
+    ctx.fillText(sala.tipo === 'cafe' ? sala.puesto : `${sala.puesto} · ${sala.area}`, 104, 150, 500);
     const sprite = new THREE.Sprite(apuntar(new THREE.SpriteMaterial({ map: texturaDe(c), transparent: true, depthTest: false })));
     const k = esMovil ? 1.3 : 1;
-    sprite.scale.set(3.6 * k, 1.125 * k, 1);
+    sprite.scale.set(3.4 * k, 1.06 * k, 1);
     sprite.renderOrder = 10;
     return sprite;
   }
@@ -180,17 +325,20 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   function pintarPantalla(p) {
     const { ctx, tipo, color, t } = p;
     const W = p.c.width, H = p.c.height;
-    ctx.fillStyle = '#0b1020';
+    const fondoP = ctx.createLinearGradient(0, 0, 0, H);
+    fondoP.addColorStop(0, '#0b1426');
+    fondoP.addColorStop(1, '#050a14');
+    ctx.fillStyle = fondoP;
     ctx.fillRect(0, 0, W, H);
     if (tipo === 'datos') {
       // Pantalla de tu despacho: los datos clave de Orvia.
       ctx.fillStyle = '#f2f4f7';
-      ctx.font = '800 34px Manrope, system-ui, sans-serif';
+      ctx.font = '800 34px Geist, system-ui, sans-serif';
       ctx.fillText('Orvia · hoy', 40, 62);
       const filas = [
-        [datos.etiquetaQueda || 'Te quedan este mes', datos.queda, '#818cf8'],
-        ['Patrimonio', datos.patrimonio, '#8ab4ff'],
-        ['Tareas de hoy', datos.tareas, '#4ade80'],
+        [datos.etiquetaQueda || 'Te quedan este mes', datos.queda, '#8b7bff'],
+        ['Patrimonio', datos.patrimonio, '#4d8dff'],
+        ['Tareas de hoy', datos.tareas, '#2fd28f'],
       ];
       filas.forEach(([etiqueta, valor, c2], i) => {
         const y = 100 + i * 106;
@@ -199,10 +347,10 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
         ctx.fillStyle = c2;
         ctx.fillRect(40, y + 18, 6, 52);
         ctx.fillStyle = '#9aa1ad';
-        ctx.font = '600 24px Manrope, system-ui, sans-serif';
+        ctx.font = '600 24px Geist, system-ui, sans-serif';
         ctx.fillText(etiqueta, 66, y + 36);
         ctx.fillStyle = '#f2f4f7';
-        ctx.font = '300 36px Manrope, system-ui, sans-serif';
+        ctx.font = '300 36px Geist, system-ui, sans-serif';
         ctx.fillText(valor, 66, y + 74, W - 130);
       });
     } else {
@@ -252,7 +400,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
 
   // Monitor de Jude: tu biblioteca (notas, ideas vivas, aprendizajes y la última nota).
   function pintarBiblioteca(ctx, W, H, color, c) {
-    const fuente = (peso, px) => `${peso} ${px}px Manrope, system-ui, sans-serif`;
+    const fuente = (peso, px) => `${peso} ${px}px Geist, system-ui, sans-serif`;
     ctx.fillStyle = '#f2f4f7';
     ctx.font = fuente(800, 15);
     ctx.fillText('BIBLIOTECA', W - 112, 19);
@@ -280,7 +428,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
 
   // Monitor de Endrick: tu día (próximo evento, tareas y hábitos de la semana).
   function pintarDiaAccion(ctx, W, H, color, a) {
-    const fuente = (peso, px) => `${peso} ${px}px Manrope, system-ui, sans-serif`;
+    const fuente = (peso, px) => `${peso} ${px}px Geist, system-ui, sans-serif`;
     ctx.fillStyle = '#f2f4f7';
     ctx.font = fuente(800, 15);
     ctx.fillText('HOY', W - 52, 19);
@@ -442,140 +590,243 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     for (const obj of decoracion) obj.visible = nivel >= obj.userData.nivel;
   }
 
-  // ---------- Salas ----------
+  // ---------- Plataformas ----------
   const objetivosClic = [];
   const personas = [];
   const salas = {};
+  const giratorios = []; // hologramas que giran despacio
+  const ARCO_ABIERTO = (125 * Math.PI) / 180; // la abertura mira al núcleo
+
+  // Charco de luz en el suelo, bajo cada plataforma
+  function charco(color, radio) {
+    const c = lienzo(256, 256), ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    g.addColorStop(0, color);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 256, 256);
+    const m = new THREE.Mesh(geo(new THREE.CircleGeometry(radio, 48)), apuntar(new THREE.MeshBasicMaterial({ map: texturaDe(c), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+    m.rotation.x = -Math.PI / 2;
+    return m;
+  }
+  // Aro de luz (o arco) en el plano horizontal. `desde`: ángulo de inicio con el criterio de CylinderGeometry.
+  function aro(radio, grosor, material, arco = Math.PI * 2, desde = 0) {
+    const t = new THREE.Mesh(geo(new THREE.TorusGeometry(radio, grosor, 8, 96, arco)), material);
+    t.rotation.x = -Math.PI / 2;
+    const g = new THREE.Group();
+    g.rotation.y = desde - Math.PI / 2;
+    g.add(t);
+    return g;
+  }
+  // Ángulo local para mirar hacia el centro de la plataforma
+  const haciaDentro = (x, z) => Math.atan2(-x, -z);
+  const enArco = (angulo, radio) => ({ x: Math.sin(angulo) * radio, z: Math.cos(angulo) * radio });
 
   for (const sala of SALAS) {
+    const r = sala.radio, h = sala.altura;
     const g = new THREE.Group();
-    g.position.set(sala.x, 0, sala.z);
-    g.rotation.y = sala.lado === 'abajo' ? Math.PI : 0; // la puerta queda en +z local
+    g.position.set(sala.x, h, sala.z);
+    g.rotation.y = sala.tipo === 'direccion' ? 0 : Math.atan2(-sala.x, -sala.z); // la abertura (+z local) mira al núcleo
     mundo.add(g);
-    const { w, d } = sala;
     const color = new THREE.Color(sala.color);
+    const luzMat = apuntar(new THREE.MeshBasicMaterial({ color, toneMapped: false }));
+    const luzSuave = apuntar(new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35, toneMapped: false }));
 
-    const suelo = caja(w - 0.12, 0.04, d - 0.12,
-      apuntar(new THREE.MeshStandardMaterial({ color: new THREE.Color('#15171c').lerp(color, 0.07), emissive: color, emissiveIntensity: 0.03, roughness: 0.8 })),
-      0, 0.02, 0, false);
+    // Zócalo metálico desde el suelo y aros de luz
+    const zocalo = new THREE.Mesh(geo(new THREE.CylinderGeometry(r, r + 0.12, h, 72)), MAT.zocalo);
+    zocalo.position.y = -h / 2;
+    zocalo.castShadow = true;
+    zocalo.receiveShadow = true;
+    g.add(zocalo);
+    const aroAlto = aro(r + 0.005, 0.03, luzMat);
+    g.add(aroAlto);
+    const aroBajo = aro(r + 0.16, 0.02, luzSuave);
+    aroBajo.position.y = -h + 0.02;
+    g.add(aroBajo);
+    const luzSuelo = charco(sala.color, r * 2.1);
+    luzSuelo.position.y = -h + 0.01;
+    g.add(luzSuelo);
+
+    // Suelo de la plataforma (es lo que se toca)
+    const suelo = new THREE.Mesh(geo(new THREE.CircleGeometry(r - 0.01, 72)),
+      apuntar(new THREE.MeshStandardMaterial({ color: new THREE.Color('#1a2234').lerp(color, 0.1), emissive: color, emissiveIntensity: 0.05, roughness: 0.55, metalness: 0.2 })));
+    suelo.rotation.x = -Math.PI / 2;
+    suelo.position.y = 0.004;
+    suelo.receiveShadow = true;
     suelo.userData.sala = sala.id;
     g.add(suelo);
     objetivosClic.push(suelo);
+    const aroInterior = aro(r - 0.45, 0.008, luzSuave);
+    aroInterior.position.y = 0.01;
+    g.add(aroInterior);
 
-    const cristal = apuntar(new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.13, roughness: 0.1, metalness: 0.2, depthWrite: false, side: THREE.DoubleSide }));
-    const canto = apuntar(new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 }));
-    const ALTO = 1.25, PUERTA = 1.8, m = 0.06;
-    const pared = (largo, x, z, rot) => {
-      const p = new THREE.Group();
-      p.add(caja(largo, ALTO, 0.05, cristal, 0, ALTO / 2, 0, false));
-      p.add(caja(largo, 0.035, 0.07, canto, 0, ALTO, 0, false));
-      p.add(caja(largo, 0.06, 0.08, MAT.pata, 0, 0.03, 0, false));
-      p.position.set(x, 0, z);
-      p.rotation.y = rot;
-      g.add(p);
-    };
-    pared(w - m * 2, 0, -d / 2 + m, 0);
-    pared(d - m * 2, -w / 2 + m, 0, Math.PI / 2);
-    pared(d - m * 2, w / 2 - m, 0, Math.PI / 2);
-    const tramo = (w - PUERTA) / 2 - m;
-    pared(tramo, -(PUERTA / 2 + tramo / 2), d / 2 - m, 0);
-    pared(tramo, PUERTA / 2 + tramo / 2, d / 2 - m, 0);
-
-    const luz = new THREE.PointLight(color, 9, 9, 1.6);
-    luz.position.set(0, 2.6, -0.5);
+    // Pared curva de cristal con su canto de luz; abierta hacia el núcleo
+    const inicioArco = ARCO_ABIERTO / 2, largoArco = Math.PI * 2 - ARCO_ABIERTO;
+    const ALTO = sala.tipo === 'cafe' ? 1.0 : 1.55;
+    const cristal = new THREE.Mesh(geo(new THREE.CylinderGeometry(r - 0.1, r - 0.1, ALTO, 72, 1, true, inicioArco, largoArco)),
+      apuntar(new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.11, roughness: 0.05, metalness: 0.3, side: THREE.DoubleSide, depthWrite: false })));
+    cristal.position.y = ALTO / 2;
+    g.add(cristal);
+    const canto = aro(r - 0.1, 0.022, luzMat, largoArco, inicioArco);
+    canto.position.y = ALTO;
+    g.add(canto);
+    // Montantes de la pared
+    const montantes = sala.tipo === 'direccion' ? 9 : 7;
+    for (let i = 0; i <= montantes; i++) {
+      const ang = inicioArco + (largoArco * i) / montantes;
+      const { x, z } = enArco(ang, r - 0.1);
+      g.add(caja(0.05, ALTO, 0.05, MAT.pata, x, ALTO / 2, z, false));
+    }
+    const luz = new THREE.PointLight(color, sala.tipo === 'direccion' ? 14 : 9, r * 2.8, 1.5);
+    luz.position.set(0, 2.6, -0.4);
     g.add(luz);
 
     if (sala.tipo === 'agente') {
       const tipoPantalla = ['finanzas', 'accion', 'cerebro'].includes(sala.id) ? sala.id : 'cerebro';
-      const mz = -d / 2 + 0.9;
+      const mz = -1.75;
       const m1 = mesa(2, 0.85); m1.position.set(0, 0, mz); g.add(m1);
       const mon = monitor(pantalla(tipoPantalla, sala.color)); mon.position.set(0, 0, mz - 0.15); g.add(mon);
       g.add(caja(0.55, 0.02, 0.18, MAT.muebleClaro, 0, 0.79, mz + 0.2, false));
       const s1 = silla(); s1.position.set(0, 0, mz + 0.85); g.add(s1);
       const p = persona(sala.color); p.position.set(0, 0, mz + 0.8); g.add(p); personas.push(p);
-      g.add(planta(w / 2 - 0.6, -d / 2 + 0.6));
+      g.add(planta(-2.15, -1.85));
       if (tipoPantalla === 'cerebro') {
-        const e1 = estanteria(['#fbbf24', '#b45309', '#e5e7eb', '#78350f', '#f59e0b']);
-        e1.position.set(-w / 2 + 0.35, 0, -0.2); e1.rotation.y = Math.PI / 2; g.add(e1);
-        const e2 = estanteria(['#fbbf24', '#e5e7eb', '#92400e']);
-        e2.position.set(w / 2 - 0.35, 0, 0.6); e2.rotation.y = -Math.PI / 2; g.add(e2);
+        for (const [ang, cols] of [[(-112 * Math.PI) / 180, ['#f2b33d', '#b45309', '#e5e7eb', '#78350f', '#ffd27a']], [(112 * Math.PI) / 180, ['#f2b33d', '#e5e7eb', '#92400e']]]) {
+          const e = estanteria(cols);
+          const { x, z } = enArco(ang, r - 0.48);
+          e.position.set(x, 0, z);
+          e.rotation.y = haciaDentro(x, z);
+          g.add(e);
+        }
       } else if (tipoPantalla === 'accion') {
-        const pizarra = caja(2.4, 1.2, 0.05, mat('#e8eaee', { roughness: 0.4 }));
-        pizarra.position.set(-w / 2 + 0.12, 1.35, 0.2); pizarra.rotation.y = Math.PI / 2; g.add(pizarra);
-        ['#4ade80', '#fbbf24', '#86efac', '#f472b6', '#4ade80', '#a5b4fc'].forEach((c2, i) => {
+        const pizarra = caja(2.0, 1.1, 0.05, mat('#e8eaee', { roughness: 0.4 }));
+        const { x, z } = enArco((-108 * Math.PI) / 180, r - 0.32);
+        const giro = haciaDentro(x, z);
+        const panel = new THREE.Group();
+        panel.position.set(x, 0, z);
+        panel.rotation.y = giro;
+        pizarra.position.set(0, 1.3, 0);
+        panel.add(pizarra);
+        ['#2fd28f', '#ffb547', '#7cf0bd', '#f472b6', '#2fd28f', '#b3a9ff'].forEach((c2, i) => {
           const n = caja(0.22, 0.22, 0.02, apuntar(new THREE.MeshBasicMaterial({ color: c2 })), 0, 0, 0, false);
-          n.position.set(-w / 2 + 0.16, 1.6 - Math.floor(i / 3) * 0.4, -0.5 + (i % 3) * 0.6);
-          n.rotation.y = Math.PI / 2;
-          g.add(n);
+          n.position.set(-0.6 + (i % 3) * 0.6, 1.55 - Math.floor(i / 3) * 0.42, 0.04);
+          panel.add(n);
         });
-        g.add(planta(-w / 2 + 0.6, d / 2 - 0.8, 0.8));
-        g.add(decoracionAccion(w, d, mz));
+        g.add(panel);
+        g.add(decoracionAccion(5.0, 5.0, mz));
       } else {
-        const m2 = monitor(pantalla('finanzas', '#c084fc'), 0.7);
+        const m2 = monitor(pantalla('finanzas', '#b3a9ff'), 0.7);
         m2.position.set(0.85, 0, mz - 0.1); m2.rotation.y = -0.45; g.add(m2);
-        g.add(caja(0.6, 1, 0.6, MAT.muebleClaro, -w / 2 + 0.5, 0.5, -d / 2 + 0.5));
+        g.add(caja(0.6, 1, 0.6, MAT.muebleClaro, 2.0, 0.5, -1.9));
       }
     } else if (sala.tipo === 'direccion') {
-      const mz = -d / 2 + 1.6;
+      const mz = -2.3;
       const m1 = mesa(3.2, 1.2); m1.position.set(0, 0, mz); g.add(m1);
       const s1 = silla(); s1.position.set(0, 0, mz - 0.95); s1.rotation.y = Math.PI; g.add(s1);
-      // Pantalla grande en la pared del fondo con los datos clave
+      // Pantalla grande al fondo con los datos clave, apoyada en la pared curva
       const grande = new THREE.Mesh(geo(new THREE.PlaneGeometry(3.6, 2.025)), apuntar(new THREE.MeshBasicMaterial({ map: pantalla('datos', sala.color), toneMapped: false })));
-      grande.position.set(0, 1.9, -d / 2 + 0.12);
+      grande.position.set(0, 2.15, -r + 0.45);
       g.add(grande);
+      g.add(caja(3.75, 2.15, 0.06, MAT.marcoMonitor, 0, 2.15, -r + 0.41, false));
       const sofa = new THREE.Group();
-      const tapiz = mat('#2c3550');
+      const tapiz = mat('#1e2a48');
       sofa.add(caja(2.4, 0.42, 0.9, tapiz, 0, 0.21, 0));
       sofa.add(caja(2.4, 0.5, 0.22, tapiz, 0, 0.55, -0.34));
-      sofa.position.set(-w / 2 + 2.2, 0, d / 2 - 1.3); sofa.rotation.y = Math.PI;
+      const ps = enArco((-62 * Math.PI) / 180, r - 1.25);
+      sofa.position.set(ps.x, 0, ps.z); sofa.rotation.y = haciaDentro(ps.x, ps.z);
       g.add(sofa);
-      g.add(caja(1.3, 0.35, 0.7, MAT.muebleClaro, -w / 2 + 2.2, 0.175, d / 2 - 2.5));
-      g.add(planta(w / 2 - 0.7, -d / 2 + 0.7, 1.3));
-      g.add(planta(-w / 2 + 0.7, -d / 2 + 0.7, 1.1));
-      g.add(caja(4.2, 0.012, 2.6, mat('#1a2236', { roughness: 1 }), 0, 0.045, mz + 0.2, false));
-      const e1 = estanteria(['#8ab4ff', '#e5e7eb', '#475569']);
-      e1.position.set(w / 2 - 0.35, 0, 0.6); e1.rotation.y = -Math.PI / 2; g.add(e1);
+      const mesita = enArco((-62 * Math.PI) / 180, r - 2.5);
+      g.add(caja(1.1, 0.32, 0.6, MAT.muebleClaro, mesita.x, 0.16, mesita.z));
+      g.add(planta(r - 1.3, -r + 1.6, 1.3));
+      g.add(planta(-r + 1.3, -r + 1.6, 1.1));
+      const alfombra = new THREE.Mesh(geo(new THREE.CircleGeometry(2.1, 64)), mat('#111a30', { roughness: 1 }));
+      alfombra.rotation.x = -Math.PI / 2; alfombra.position.set(0, 0.012, mz + 0.4); alfombra.receiveShadow = true;
+      g.add(alfombra);
+      const pe = enArco((62 * Math.PI) / 180, r - 0.5);
+      const e1 = estanteria(['#4d8dff', '#e5e7eb', '#475569']);
+      e1.position.set(pe.x, 0, pe.z); e1.rotation.y = haciaDentro(pe.x, pe.z); g.add(e1);
+      // Holograma de Orvia: una esfera de líneas con su órbita, girando sobre el núcleo
+      const holo = new THREE.Group();
+      const lineas = apuntar(new THREE.LineBasicMaterial({ color: '#7fb0ff', transparent: true, opacity: 0.55, toneMapped: false }));
+      holo.add(new THREE.LineSegments(geo(new THREE.WireframeGeometry(geo(new THREE.IcosahedronGeometry(0.85, 2)))), lineas));
+      const orbita = aro(1.25, 0.012, apuntar(new THREE.MeshBasicMaterial({ color: '#48e2ff', toneMapped: false })));
+      orbita.rotation.z = 0.42;
+      holo.add(orbita);
+      const nucleo = new THREE.Mesh(geo(new THREE.SphereGeometry(0.22, 24, 16)), apuntar(new THREE.MeshBasicMaterial({ color: '#bfe0ff', toneMapped: false })));
+      holo.add(nucleo);
+      holo.position.set(0, 5.0, 0.2);
+      holo.scale.setScalar(0.8);
+      g.add(holo);
+      giratorios.push(holo);
     } else {
-      g.add(caja(4.2, 0.95, 0.7, MAT.muebleClaro, -1, 0.475, -d / 2 + 0.55));
-      g.add(caja(0.5, 0.55, 0.4, mat('#1b1e24', { metalness: 0.6, roughness: 0.3 }), -2.3, 1.22, -d / 2 + 0.55));
-      const piloto = new THREE.Mesh(geo(new THREE.SphereGeometry(0.04, 8, 8)), apuntar(new THREE.MeshBasicMaterial({ color: '#fbbf24' })));
-      piloto.position.set(-2.3, 1.3, -d / 2 + 0.76);
+      g.add(caja(2.6, 0.95, 0.6, MAT.muebleClaro, 0, 0.475, -r + 0.75));
+      g.add(caja(0.45, 0.5, 0.36, mat('#141a26', { metalness: 0.6, roughness: 0.3 }), -0.8, 1.2, -r + 0.75));
+      const piloto = new THREE.Mesh(geo(new THREE.SphereGeometry(0.04, 8, 8)), apuntar(new THREE.MeshBasicMaterial({ color: '#ffb547' })));
+      piloto.position.set(-0.8, 1.28, -r + 0.95);
       g.add(piloto);
-      for (let i = 0; i < 3; i++) g.add(caja(0.09, 0.11, 0.09, MAT.blanco, -1.4 + i * 0.25, 1.0, -d / 2 + 0.5, false));
-      const tablero = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.75, 0.75, 0.05, 32)), MAT.mueble);
-      tablero.position.set(1, 0.75, 0.4); tablero.castShadow = true; tablero.receiveShadow = true;
+      for (let i = 0; i < 3; i++) g.add(caja(0.09, 0.11, 0.09, MAT.blanco, 0.1 + i * 0.25, 1.0, -r + 0.7, false));
+      const tablero = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.62, 0.62, 0.05, 32)), MAT.mueble);
+      tablero.position.set(0, 0.75, 0.3); tablero.castShadow = true; tablero.receiveShadow = true;
       g.add(tablero);
-      g.add(caja(0.08, 0.72, 0.08, MAT.pata, 1, 0.36, 0.4));
+      g.add(caja(0.08, 0.72, 0.08, MAT.pata, 0, 0.36, 0.3));
       const asiento = mat(sala.color, { roughness: 0.6 });
       for (let i = 0; i < 3; i++) {
         const a = (i / 3) * Math.PI * 2 + 0.4;
-        const taburete = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 20)), asiento);
-        taburete.position.set(1 + Math.cos(a) * 1.1, 0.5, 0.4 + Math.sin(a) * 1.1);
+        const taburete = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 20)), asiento);
+        taburete.position.set(Math.cos(a) * 0.95, 0.5, 0.3 + Math.sin(a) * 0.95);
         taburete.castShadow = true;
         g.add(taburete);
         g.add(caja(0.05, 0.48, 0.05, MAT.pata, taburete.position.x, 0.24, taburete.position.z, false));
       }
-      const lampara = new THREE.Mesh(geo(new THREE.SphereGeometry(0.22, 20, 14)), apuntar(new THREE.MeshBasicMaterial({ color: '#ffe6c2' })));
-      lampara.position.set(1, 2.6, 0.4);
+      const lampara = new THREE.Mesh(geo(new THREE.SphereGeometry(0.2, 20, 14)), apuntar(new THREE.MeshBasicMaterial({ color: '#ffe6c2', toneMapped: false })));
+      lampara.position.set(0, 2.3, 0.3);
       g.add(lampara);
-      g.add(planta(w / 2 - 0.6, -d / 2 + 0.6, 1.2));
-      g.add(planta(w / 2 - 0.6, d / 2 - 0.9, 0.9));
+      g.add(planta(1.6, -1.3, 1.1));
     }
 
+    // Etiqueta flotante con su hilo de luz
     const c = cartel(sala);
-    c.position.set(0, 2.35, d / 2 - 0.1);
+    const altoCartel = sala.tipo === 'direccion' ? 3.1 : 3.0;
+    const zCartel = sala.tipo === 'direccion' ? r - 0.9 : 0.2;
+    c.position.set(0, altoCartel, zCartel);
     c.userData.sala = sala.id;
     g.add(c);
     objetivosClic.push(c);
+    const hilo = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.008, 0.008, altoCartel - 0.6 - ALTO * 0.2, 6)), luzSuave);
+    hilo.position.set(0, (altoCartel - 0.55 + ALTO * 0.2) / 2, zCartel);
+    g.add(hilo);
 
     g.updateMatrixWorld(true);
-    const desde = sala.tipo === 'agente' ? new THREE.Vector3(1.5, 2.5, -d / 2 + 3.4)
-      : sala.tipo === 'direccion' ? new THREE.Vector3(0.8, 4.4, d / 2 + 1.0)
-      : new THREE.Vector3(0.4, 4.6, d / 2 + 1.4);
-    const hacia = sala.tipo === 'agente' ? new THREE.Vector3(0, 1.0, -d / 2 + 0.95)
-      : sala.tipo === 'direccion' ? new THREE.Vector3(0, 1.1, -1.6)
-      : new THREE.Vector3(0, 0.8, -0.9);
-    salas[sala.id] = { sala, grupo: g, suelo, cartel: c, pos: g.localToWorld(desde.clone()), obj: g.localToWorld(hacia.clone()) };
+    const desde = sala.tipo === 'agente' ? new THREE.Vector3(1.9, 3.4, 3.4)
+      : sala.tipo === 'direccion' ? new THREE.Vector3(0.9, 4.6, 3.6)
+      : new THREE.Vector3(0.5, 3.6, 3.6);
+    const hacia = sala.tipo === 'agente' ? new THREE.Vector3(0, 0.9, -1.4)
+      : sala.tipo === 'direccion' ? new THREE.Vector3(0, 1.4, -2.4)
+      : new THREE.Vector3(0, 0.8, -0.4);
+    salas[sala.id] = { sala, grupo: g, suelo, aro: aroAlto, cartel: c, hilo, pos: g.localToWorld(desde.clone()), obj: g.localToWorld(hacia.clone()) };
+  }
+
+  // Puentes de luz: del borde del núcleo al borde de cada plataforma
+  {
+    const nucleo = SALAS.find((x) => x.tipo === 'direccion');
+    for (const sala of SALAS) {
+      if (sala === nucleo) continue;
+      const dir = new THREE.Vector3(sala.x - nucleo.x, 0, sala.z - nucleo.z).normalize();
+      const a = new THREE.Vector3(nucleo.x, nucleo.altura, nucleo.z).addScaledVector(dir, nucleo.radio - 0.05);
+      const b = new THREE.Vector3(sala.x, sala.altura, sala.z).addScaledVector(dir, -(sala.radio - 0.05));
+      const largo = a.distanceTo(b);
+      const puente = new THREE.Group();
+      puente.position.copy(a).lerp(b, 0.5);
+      puente.lookAt(b);
+      const ancho = sala.tipo === 'cafe' ? 0.9 : 1.2;
+      puente.add(caja(ancho, 0.06, largo, MAT.zocalo, 0, -0.03, 0));
+      const borde = apuntar(new THREE.MeshBasicMaterial({ color: new THREE.Color(sala.color), toneMapped: false }));
+      for (const lado of [-1, 1]) puente.add(caja(0.035, 0.035, largo, borde, lado * (ancho / 2 - 0.02), 0.01, 0, false));
+      const centro = apuntar(new THREE.MeshBasicMaterial({ color: new THREE.Color(sala.color), transparent: true, opacity: 0.18, toneMapped: false }));
+      for (let i = 0; i < Math.floor(largo / 0.7); i++) puente.add(caja(0.2, 0.012, 0.28, centro, 0, 0.012, -largo / 2 + 0.45 + i * 0.7, false));
+      mundo.add(puente);
+    }
   }
 
   // ---------- Cámara: vista general y entrada en salas ----------
@@ -615,10 +866,13 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     if (b) alAbrirModulo(b.dataset.abrir);
   });
 
+  // Dentro de una plataforma, las etiquetas se esconden para no tapar la vista.
+  const mostrarCarteles = (dentro) => { for (const x of Object.values(salas)) { x.cartel.visible = !dentro; x.hilo.visible = !dentro; } };
   function entrar(id) {
     const s = salas[id];
     if (!s) return;
     salaActual = id;
+    mostrarCarteles(id);
     controles.minDistance = 1.5;
     volarA(s.pos, s.obj, () => { controles.enabled = true; });
     $('#of-volver').hidden = false;
@@ -628,6 +882,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   }
   function verOficina() {
     salaActual = null;
+    mostrarCarteles(null);
     volarA(vistaGeneral.pos, vistaGeneral.obj, () => { controles.enabled = true; controles.minDistance = 7; });
     $('#of-volver').hidden = true;
     $('#of-pista').hidden = false;
@@ -652,9 +907,9 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   }
   function resaltar(id) {
     if (resaltada === id) return;
-    if (resaltada) salas[resaltada].suelo.material.emissiveIntensity = 0.03;
+    if (resaltada) { salas[resaltada].suelo.material.emissiveIntensity = 0.05; salas[resaltada].aro.scale.setScalar(1); }
     resaltada = id;
-    if (id) salas[id].suelo.material.emissiveIntensity = 0.16;
+    if (id) { salas[id].suelo.material.emissiveIntensity = 0.2; salas[id].aro.scale.setScalar(1.012); }
     renderer.domElement.style.cursor = id ? 'pointer' : 'grab';
   }
   renderer.domElement.addEventListener('pointerdown', (ev) => { inicio = { x: ev.clientX, y: ev.clientY, t: performance.now() }; });
@@ -681,6 +936,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     const r = escena.getBoundingClientRect();
     if (!r.width || !r.height) return;
     renderer.setSize(r.width, r.height, false);
+    if (compositor) { compositor.setPixelRatio(renderer.getPixelRatio()); compositor.setSize(r.width, r.height); }
     camara.aspect = r.width / r.height;
     const vertical = r.width / r.height < 0.9;
     camara.fov = vertical ? 48 : r.width >= 900 ? 43 : 40;
@@ -722,22 +978,27 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
         cabeza.rotation.x = 0.12 + Math.sin(t * 0.9 + fase) * 0.05;
         cabeza.rotation.y = Math.sin(t * 0.45 + fase) * 0.18;
       }
+      for (const holo of giratorios) { holo.rotation.y = t * 0.25; holo.position.y = 5.0 + Math.sin(t * 0.8) * 0.08; }
+      polvo.rotation.y = t * 0.012;
+      polvo.position.y = Math.sin(t * 0.3) * 0.15;
       if (ahora - ultimoPintado > 450) {
         ultimoPintado = ahora;
         for (const p of pantallas) if (p.tipo !== 'datos') { p.t += 0.45; pintarPantalla(p); }
       }
     }
     controles.update();
-    renderer.render(mundo, camara);
+    if (compositor) compositor.render();
+    else renderer.render(mundo, camara);
   }
 
-  // Cuando la fuente Manrope está lista, se repintan carteles y pantallas.
+  // Cuando la fuente Geist está lista, se repintan carteles y pantallas.
   document.fonts?.ready.then(() => {
     if (!marco) return;
     for (const s of Object.values(salas)) {
       const nuevo = cartel(s.sala);
       nuevo.position.copy(s.cartel.position);
       nuevo.userData.sala = s.sala.id;
+      nuevo.visible = s.cartel.visible;
       s.grupo.remove(s.cartel);
       objetivosClic.splice(objetivosClic.indexOf(s.cartel), 1, nuevo);
       s.grupo.add(nuevo);
@@ -773,6 +1034,8 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
       observador.disconnect();
       removeEventListener('keydown', alTecla);
       controles.dispose();
+      brillo?.dispose();
+      compositor?.dispose?.();
       for (const r of recursos) r.dispose?.();
       renderer.dispose();
       renderer.forceContextLoss();

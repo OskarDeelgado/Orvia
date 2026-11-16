@@ -15,7 +15,7 @@ export default {
   agente: {
     nombre: 'Endrick',
     puesto: 'Jefe de operaciones',
-    color: '#4ade80',
+    color: '#2fd28f',
     tarea: 'Organiza tu semana: tareas, proyectos y hábitos con niveles.',
     situacion: 'Tu semana ya está en marcha',
   },
