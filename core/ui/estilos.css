@@ -3207,3 +3207,9 @@ button.an-fila { cursor: pointer; }
 .grupo-nuevo { display: grid; gap: var(--esp-2); margin-top: var(--esp-2); padding-left: var(--esp-3); border-left: 2px solid var(--cristal-linea); }
 .grupo-nuevo[hidden], .campo[hidden] { display: none; }
 .grupo-nuevo input { width: 100%; min-height: 44px; padding: 0 var(--esp-3); border: 1px solid var(--linea); border-radius: var(--radio-s); background: var(--superficie); color: var(--tinta); font: inherit; }
+
+/* Segundo cerebro (bloque 2): de idea a proyecto */
+.nota-convertir { display: grid; gap: var(--esp-2); margin-top: var(--esp-2); }
+.nota-convertir .suave { font-size: 0.8125rem; text-align: center; }
+.boton-convertir { background: linear-gradient(145deg, #16a34a, #0d9488); color: #f2f4f7; }
+.proyecto-origen { display: block; padding: 10px 12px; border-radius: 12px; background: rgb(252 211 77 / 0.1); color: #fde68a; font-size: 0.8125rem; font-weight: 600; text-decoration: none; }

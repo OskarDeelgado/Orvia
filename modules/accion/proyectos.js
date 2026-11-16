@@ -264,6 +264,7 @@ function pintarFicha(contenedor, datos, r) {
       </div>
       <h2 id="p-titulo">${escapar(p.titulo)}</h2>
       ${p.descripcion ? `<p class="proyecto-descripcion">${escapar(p.descripcion)}</p>` : ''}
+      ${(datos.notas || []).filter((n) => n.proyecto_id === p.id).map((n) => `<a class="proyecto-origen" href="#/cerebro/nota/${n.id}">${n.tipo === 'idea' ? 'Nació de la idea' : 'Nota enlazada'}: ${escapar(n.titulo)}</a>`).join('')}
       ${fechas ? `<p class="suave">${fechas.replace(/^./, (c) => c.toUpperCase())}</p>` : ''}
       <div class="proyecto-progreso">
         <div class="barra-proyecto grande" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Progreso del proyecto"><i style="width:${pct}%"></i></div>
@@ -352,16 +353,18 @@ function confirmarBorrado(b, texto, accion) {
 }
 
 /** Crear o editar un proyecto. Al crearlo se pueden escribir sus hitos, uno por línea. */
-export function abrirHojaProyecto({ proyecto = null, datos } = {}) {
+export function abrirHojaProyecto({ proyecto = null, datos, inicial = null, alCrear = null } = {}) {
   const editando = !!proyecto;
+  // `inicial` rellena un proyecto nuevo (por ejemplo, al convertir una idea del Segundo cerebro).
+  const base = proyecto || inicial || {};
   const areas = datos?.areas || [];
-  const estado = { tipo: proyecto?.tipo || 'emprendimiento', estado: proyecto?.estado || 'activo', area: proyecto?.area_id || null };
+  const estado = { tipo: base.tipo || 'emprendimiento', estado: proyecto?.estado || 'activo', area: base.area_id || null };
   const { cuerpo, cerrar } = abrirHojaBase(editando ? 'Editar proyecto' : 'Nuevo proyecto', { mundo: 'accion' });
   cuerpo.innerHTML = `
     <form class="hoja-form" id="form-proyecto" novalidate>
       <div class="campo">
         <label for="pr-titulo">Nombre</label>
-        <input id="pr-titulo" maxlength="200" autocomplete="off" placeholder="Lanzar Sobrea" value="${escapar(proyecto?.titulo || '')}">
+        <input id="pr-titulo" maxlength="200" autocomplete="off" placeholder="Lanzar Sobrea" value="${escapar(base.titulo || '')}">
       </div>
       <div class="campo">
         <span class="etiqueta-campo" id="et-tipo">Tipo</span>
@@ -377,7 +380,7 @@ export function abrirHojaProyecto({ proyecto = null, datos } = {}) {
       </div>
       <div class="campo">
         <label for="pr-desc">Qué quieres conseguir (opcional)</label>
-        <textarea id="pr-desc" rows="2" maxlength="2000" placeholder="Tener la app publicada y 10 personas usándola">${escapar(proyecto?.descripcion || '')}</textarea>
+        <textarea id="pr-desc" rows="2" maxlength="2000" placeholder="Tener la app publicada y 10 personas usándola">${escapar(base.descripcion || '')}</textarea>
       </div>
       <div class="dos-campos">
         <div class="campo"><label for="pr-inicio">Empieza (opcional)</label><input type="date" id="pr-inicio" value="${proyecto?.fecha_inicio || ''}"></div>
@@ -445,6 +448,7 @@ export function abrirHojaProyecto({ proyecto = null, datos } = {}) {
         const fila = Array.isArray(nuevo) ? nuevo[0] : nuevo;
         const hitos = $('#pr-hitos').value.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 20);
         for (const [i, t] of hitos.entries()) await crearHito({ proyecto_id: fila.id, titulo: t.slice(0, 200), orden: i });
+        if (alCrear) await alCrear(fila);
         aviso(`Proyecto creado: ${titulo}`);
         cerrar('guardado');
         location.hash = `#/accion/proyectos/${fila.id}`;

@@ -116,13 +116,15 @@ export const avisarHabitos = () => dispatchEvent(new CustomEvent('orvia:accion')
 
 /** Proyectos con sus hitos y tareas (las tareas sueltas no se leen aquí). */
 export async function leerProyectos() {
-  const [proyectos, hitos, tareas, areas] = await Promise.all([
+  const [proyectos, hitos, tareas, areas, notas] = await Promise.all([
     listar('proyectos', { orden: 'orden' }),
     listar('hitos', { orden: 'orden' }),
     listar('tareas', { conValor: ['proyecto_id'] }),
     listarAreas(),
+    // Notas del Segundo cerebro enlazadas a un proyecto (la idea de la que nació, por ejemplo).
+    listar('notas', { conValor: ['proyecto_id'] }).catch(() => []),
   ]);
-  return { proyectos, hitos, tareas: tareas.filter((t) => t.estado !== 'cancelada'), areas, porArea: Object.fromEntries(areas.map((a) => [a.id, a])) };
+  return { proyectos, hitos, notas, tareas: tareas.filter((t) => t.estado !== 'cancelada'), areas, porArea: Object.fromEntries(areas.map((a) => [a.id, a])) };
 }
 
 /** Lista corta para elegir proyecto (y hito) en el panel de tarea. */

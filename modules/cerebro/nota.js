@@ -38,6 +38,11 @@ export function pintarNota(contenedor, n, datos) {
         ${area ? `<span class="nota-area"><span class="punto" style="--c:var(--area-${area.color})"></span>${escapar(area.nombre)}</span>` : ''}
       </div>
       ${proyecto ? `<a class="grupo-proyecto" href="#/accion/proyectos/${proyecto.id}">Proyecto en Acción: ${escapar(proyecto.titulo)}</a>` : ''}
+      ${n.tipo === 'idea' && !proyecto && n.estado !== 'descartada' ? `
+        <div class="nota-convertir">
+          <button class="boton ancho boton-convertir" type="button" data-convertir>Convertir en proyecto</button>
+          <p class="suave">Se crea en Acción con este texto como descripción. La idea queda como «Lanzada» y enlazada al proyecto.</p>
+        </div>` : ''}
       <p class="suave nota-fechas">Creada ${hace(n.creado)}${n.modificado && String(n.modificado).slice(0, 16) !== String(n.creado).slice(0, 16) ? ` · cambiada ${hace(n.modificado)}` : ''}</p>
     </article>`;
 }
@@ -50,6 +55,15 @@ export async function alClicNota(e, datos, id) {
   const d = b.dataset;
   try {
     if (d.editarNota != null) { abrirHojaNota({ nota: n }); return true; }
+    if (d.convertir != null) {
+      const { abrirHojaProyecto } = await import('../accion/proyectos.js');
+      abrirHojaProyecto({
+        datos: { areas: datos.areas, proyectos: datos.proyectos },
+        inicial: { titulo: n.titulo, descripcion: String(n.contenido || '').replace(/\*\*/g, '').replace(/^#{1,2}\s+/gm, '').slice(0, 1900).trim(), tipo: 'emprendimiento', area_id: n.area_id },
+        alCrear: (proyecto) => cambiarNota(n.id, { proyecto_id: proyecto.id, estado: 'lanzada' }),
+      });
+      return true;
+    }
     if (d.fijar != null) {
       const fijar = !n.fijada;
       await cambiarNota(n.id, { fijada: fijar });
