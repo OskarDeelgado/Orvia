@@ -3,7 +3,7 @@
 import { escapar, aviso } from '../../core/ui/componentes.js';
 import { abrirHojaBase } from '../../core/ui/hoja.js';
 import {
-  TIPOS, ESTADOS, SECCIONES, TIPOS_GRUPO, leerCerebro, crearNota, guardarNota, eliminarNota,
+  TIPOS, ESTADOS, SECCIONES, TIPOS_GRUPO, HORIZONTES, plazoDe, leerCerebro, crearNota, guardarNota, eliminarNota,
   crearGrupo, guardarGrupo, eliminarGrupo, leerEtiquetas, avisarCerebro,
 } from './datos.js';
 
@@ -34,6 +34,7 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
     tipo: nota?.tipo || tipo,
     estado: nota?.estado || 'bruto',
     seccion: nota?.seccion || seccion,
+    horizonte: nota?.horizonte || null,
     grupo: nota ? nota.grupo_id : grupo,
     area: nota?.area_id || null,
     grupoNuevo: false,
@@ -91,6 +92,12 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
           ${SECCIONES.map(([v, l]) => `<button type="button" class="chip-opcion" data-seccion="${v}">${l}</button>`).join('')}
         </div>
       </div>
+      <div class="campo" id="campo-horizonte" hidden>
+        <span class="etiqueta-campo" id="et-nplazo">Plazo de la meta</span>
+        <div class="chips-elegir" role="group" aria-labelledby="et-nplazo">
+          ${HORIZONTES.map((h) => `<button type="button" class="chip-opcion" data-horizonte="${h}">${plazoDe(h)}</button>`).join('')}
+        </div>
+      </div>
 
       <div class="campo">
         <label for="nota-etiquetas">Etiquetas (opcional, separadas por comas)</label>
@@ -117,6 +124,11 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
     $('[data-grupo-nuevo]').setAttribute('aria-pressed', String(estado.grupoNuevo));
     $('#grupo-nuevo').hidden = !estado.grupoNuevo;
     cuerpo.querySelectorAll('[data-solo]').forEach((c) => { c.hidden = c.dataset.solo !== estado.tipo; });
+    cuerpo.querySelectorAll('[data-horizonte]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.horizonte) === estado.horizonte)));
+    $('#campo-horizonte').hidden = !(estado.tipo === 'sobre_mi' && estado.seccion === 'metas');
+    // Cada sección pide una cosa distinta en el título.
+    const pista = estado.tipo !== 'sobre_mi' ? '' : { perfil: 'Quién soy', valores: 'Libertad', metas: 'Vivir de mi propio negocio', reflexiones: '' }[estado.seccion] || '';
+    $('#nota-titulo').placeholder = pista;
   };
   pintar();
   setTimeout(() => { if (!editando) $('#nota-titulo').focus(); }, 80);
@@ -152,6 +164,7 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
     if (d.tipo) estado.tipo = d.tipo;
     else if (d.estado) estado.estado = d.estado;
     else if (d.seccion) estado.seccion = d.seccion;
+    else if (d.horizonte) estado.horizonte = estado.horizonte === Number(d.horizonte) ? null : Number(d.horizonte);
     else if (d.tipoGrupo) estado.tipoGrupo = d.tipoGrupo;
     else if (d.area) estado.area = estado.area === d.area ? null : d.area;
     else if (d.grupoNuevo != null) { estado.grupoNuevo = true; pintar(); $('#grupo-nombre').focus(); return; }
@@ -188,6 +201,7 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
         titulo, contenido, tipo: estado.tipo, estado: estado.estado, seccion: estado.seccion, grupo_id: grupoId,
         area_id: estado.area, etiquetas: leerEtiquetas($('#nota-etiquetas').value),
         fijada: nota?.fijada || false, proyecto_id: nota?.proyecto_id || null,
+        horizonte: estado.horizonte, conHorizonte: nota?.horizonte != null,
       };
       if (editando) await guardarNota(nota.id, campos);
       else await crearNota(campos);
@@ -195,7 +209,7 @@ export async function abrirHojaNota({ nota = null, tipo = 'idea', grupo = null, 
       cerrar('guardado');
       avisarCerebro();
     } catch (err) {
-      aviso(err.message, { error: true });
+      aviso(/horizonte/.test(err.message) ? 'Para guardar el plazo, ejecuta antes supabase/008_sobre_ti.sql en Supabase' : err.message, { error: true });
       boton.disabled = false;
     }
   });

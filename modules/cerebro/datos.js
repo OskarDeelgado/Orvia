@@ -11,11 +11,13 @@ export const TIPOS = {
 };
 export const ESTADOS = [['bruto', 'En bruto'], ['madurando', 'Madurando'], ['lanzada', 'Lanzada'], ['descartada', 'Descartada']];
 export const SECCIONES = [
-  ['perfil', 'Perfil', 'Quién eres: formación, trabajo, lo que se te da bien.'],
-  ['valores', 'Valores', 'Lo que no negocias y por qué.'],
-  ['metas', 'Metas a largo plazo', 'Dónde quieres estar dentro de 3, 5 o 10 años.'],
-  ['reflexiones', 'Reflexiones', 'Lo que piensas cuando paras: se guarda con su fecha.'],
+  ['perfil', 'Perfil', 'Quién eres: tu formación, tu trabajo, lo que se te da bien y lo que te gusta.'],
+  ['valores', 'Valores', 'Lo que no negocias. Un valor por tarjeta: el nombre y qué significa para ti.'],
+  ['metas', 'Metas a largo plazo', 'Dónde quieres estar dentro de 1, 3, 5 o 10 años.'],
+  ['reflexiones', 'Reflexiones', 'Lo que piensas cuando paras. Cada una se guarda con su fecha.'],
 ];
+export const HORIZONTES = [1, 3, 5, 10];
+export const plazoDe = (n) => (n ? `${n} ${n === 1 ? 'año' : 'años'}` : '');
 export const TIPOS_GRUPO = [['curso', 'Curso'], ['libro', 'Libro'], ['tema', 'Tema'], ['otro', 'Otro']];
 export const nombreDe = (lista, valor) => (lista.find(([v]) => v === valor) || [null, ''])[1];
 
@@ -37,8 +39,11 @@ export async function leerCerebro() {
 }
 
 /** Deja solo los campos que tocan a cada tipo de nota. */
-function limpiar({ titulo, contenido = '', tipo = 'idea', estado, seccion, grupo_id, area_id = null, etiquetas = [], fijada = false, proyecto_id = null }) {
+function limpiar({ titulo, contenido = '', tipo = 'idea', estado, seccion, grupo_id, area_id = null, etiquetas = [], fijada = false, proyecto_id = null, horizonte, conHorizonte = false }) {
+  const esMeta = tipo === 'sobre_mi' && seccion === 'metas';
   return {
+    // El plazo solo viaja cuando hace falta: así todo lo demás funciona aunque falte la migración 008.
+    ...(esMeta && horizonte ? { horizonte } : conHorizonte ? { horizonte: null } : {}),
     titulo, contenido, tipo, area_id, etiquetas, fijada, proyecto_id,
     estado: tipo === 'idea' ? estado || 'bruto' : null,
     seccion: tipo === 'sobre_mi' ? seccion || 'reflexiones' : null,

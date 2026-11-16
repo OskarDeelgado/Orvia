@@ -3227,3 +3227,23 @@ button.an-fila { cursor: pointer; }
 .nota-tareas h3 { font-size: 0.9375rem; color: var(--tinta-suave); }
 .nota-tareas p { font-size: 0.875rem; }
 .tarea-de-nota.hecha .fila-nota-titulo { text-decoration: line-through; color: var(--tinta-suave); }
+
+/* Segundo cerebro (bloque 4): la página «Sobre ti» */
+.seccion-sobre-ti { --tipo: #c4b5fd; }
+.perfil-bloque { display: grid; gap: var(--esp-2); justify-items: start; }
+.perfil-bloque + .perfil-bloque { margin-top: var(--esp-3); padding-top: var(--esp-3); border-top: 1px solid rgb(255 255 255 / 0.08); }
+.perfil-bloque .nota-texto { font-size: 0.9375rem; line-height: 1.55; }
+.perfil-gustos { display: flex; flex-wrap: wrap; gap: 6px; }
+.perfil-gustos span { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgb(196 181 253 / 0.12); color: #ddd6fe; font-size: 0.8125rem; }
+.valores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--esp-2); }
+.valor { display: grid; gap: 2px; align-content: start; padding: 12px; border-radius: 14px; background: rgb(196 181 253 / 0.08); color: var(--tinta); text-decoration: none; }
+.valor strong { font-size: 0.9375rem; }
+.valor span { font-size: 0.8125rem; line-height: 1.4; color: var(--tinta-suave); }
+.metas { display: grid; gap: var(--esp-1); }
+.meta { display: flex; gap: var(--esp-3); align-items: flex-start; padding: 8px 0; color: var(--tinta); text-decoration: none; }
+.meta-plazo { flex: none; min-width: 60px; padding: 4px 8px; border-radius: 8px; background: rgb(196 181 253 / 0.14); color: #ddd6fe; font-size: 0.75rem; font-weight: 800; text-align: center; }
+.meta-plazo.sin-plazo { background: rgb(255 255 255 / 0.07); color: var(--tinta-suave); font-weight: 600; }
+.meta-texto { display: grid; gap: 2px; min-width: 0; }
+.meta-texto strong { font-size: 0.9375rem; line-height: 1.4; }
+.meta-texto span { font-size: 0.8125rem; line-height: 1.4; color: var(--tinta-suave); }
+.valor:focus-visible, .meta:focus-visible { outline: 2px solid var(--tipo); outline-offset: 2px; }

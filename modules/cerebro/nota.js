@@ -2,7 +2,7 @@
 // con un toque. Para cambiar el texto, «Editar» abre el panel de la nota.
 
 import { escapar, aviso } from '../../core/ui/componentes.js';
-import { TIPOS, ESTADOS, SECCIONES, nombreDe, cambiarNota, avisarCerebro, hace, tareasDeNota, enlazarTarea } from './datos.js';
+import { TIPOS, ESTADOS, SECCIONES, nombreDe, cambiarNota, avisarCerebro, hace, plazoDe, tareasDeNota, enlazarTarea } from './datos.js';
 import { fechaCorta, hoy } from '../accion/fechas.js';
 import { pintarTexto } from './formato.js';
 import { abrirHojaNota } from './hoja.js';
@@ -17,7 +17,7 @@ export function pintarNota(contenedor, n, datos) {
   const area = datos.porArea[n.area_id];
   const proyecto = datos.porProyecto[n.proyecto_id];
   const subtitulo = n.tipo === 'aprendizaje' ? (grupo ? escapar(grupo.nombre) : 'Sin grupo')
-    : n.tipo === 'sobre_mi' ? nombreDe(SECCIONES, n.seccion || 'reflexiones') : '';
+    : n.tipo === 'sobre_mi' ? `${nombreDe(SECCIONES, n.seccion || 'reflexiones')}${n.horizonte ? ` · a ${plazoDe(n.horizonte)}` : ''}` : '';
   contenedor.innerHTML = `
     <article class="nota-abierta" style="--tipo:${t.color}">
       <div class="nota-barra">

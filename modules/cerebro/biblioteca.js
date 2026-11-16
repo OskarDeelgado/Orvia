@@ -6,8 +6,8 @@
 //   #/cerebro/nota/<id>     Una nota abierta (nota.js)
 
 import { escapar } from '../../core/ui/componentes.js';
-import { TIPOS, ESTADOS, SECCIONES, TIPOS_GRUPO, nombreDe, leerCerebro, hace } from './datos.js';
-import { extracto } from './formato.js';
+import { TIPOS, ESTADOS, SECCIONES, TIPOS_GRUPO, nombreDe, plazoDe, leerCerebro, hace } from './datos.js';
+import { extracto, pintarTexto } from './formato.js';
 import { abrirHojaNota, abrirHojaGrupo } from './hoja.js';
 import { pintarNota, alClicNota } from './nota.js';
 
@@ -100,6 +100,7 @@ export async function montarCerebro(contenedor, seccion, id) {
     else if (d.filtroEstado != null) { filtro.estado = d.filtroEstado; pintar(); }
     else if (d.nuevaNota != null) abrirHojaNota({ tipo: d.nuevaNota || 'idea', grupo: d.grupo || null, seccion: d.seccion || undefined });
     else if (d.nuevoGrupo != null) abrirHojaGrupo();
+    else if (d.editarNotaId) abrirHojaNota({ nota: datos.notas.find((n) => n.id === d.editarNotaId) });
     else if (d.editarGrupo) abrirHojaGrupo({ grupo: datos.porGrupo[d.editarGrupo] });
     else if (d.limpiarBusqueda != null) { filtro.texto = ''; pintar(); }
   });
@@ -259,23 +260,55 @@ const filaNota = (n) => `
 
 function pintarSobreTi(contenedor, datos) {
   const notas = datos.notas.filter((n) => n.tipo === 'sobre_mi');
+  const de = (sec) => notas.filter((n) => (n.seccion || 'reflexiones') === sec);
+  const ayuda = (sec) => SECCIONES.find(([v]) => v === sec)[2];
+  const cabeza = (sec, nombre, boton) => `
+    <div class="titulo-con-enlace">
+      <h3 id="s-${sec}">${nombre}</h3>
+      <button class="enlace" type="button" data-nueva-nota="sobre_mi" data-seccion="${sec}">${boton}</button>
+    </div>`;
+  const perfil = de('perfil').sort((a, b) => String(a.creado).localeCompare(String(b.creado)));
+  const valores = de('valores').sort((a, b) => String(a.creado).localeCompare(String(b.creado)));
+  // Las metas más lejanas, primero; las que no tienen plazo, al final.
+  const metas = de('metas').sort((a, b) => (b.horizonte || 0) - (a.horizonte || 0) || String(a.creado).localeCompare(String(b.creado)));
+  const reflexiones = de('reflexiones').sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
+
   contenedor.innerHTML = `
     <div class="cerebro-titulo">
       <h2>Sobre ti</h2>
       <p class="suave">Lo que eres y hacia dónde vas. Vuelve aquí cuando tengas que decidir algo grande.</p>
     </div>
     <div class="secciones-sobre-ti">
-      ${SECCIONES.map(([v, nombre, ayuda]) => {
-        const ns = notas.filter((n) => (n.seccion || 'reflexiones') === v);
-        return `
-          <section class="cristal seccion-sobre-ti" aria-labelledby="s-${v}">
-            <div class="titulo-con-enlace">
-              <h3 id="s-${v}">${nombre}</h3>
-              <button class="enlace" type="button" data-nueva-nota="sobre_mi" data-seccion="${v}">+ Escribir</button>
-            </div>
-            ${ns.length ? `<div class="grupo-lista">${ns.map((n) => filaNota(n)).join('')}</div>` : `<p class="suave">${ayuda}</p>`}
-          </section>`;
-      }).join('')}
+      <section class="cristal seccion-sobre-ti" aria-labelledby="s-perfil">
+        ${cabeza('perfil', 'Perfil', perfil.length ? '+ Añadir' : '+ Escribir')}
+        ${perfil.length ? perfil.map((n) => `
+          <div class="perfil-bloque">
+            ${perfil.length > 1 ? `<strong>${escapar(n.titulo)}</strong>` : ''}
+            <div class="nota-texto">${n.contenido ? pintarTexto(n.contenido) : `<p>${escapar(n.titulo)}</p>`}</div>
+            ${n.etiquetas?.length ? `<div class="perfil-gustos">${n.etiquetas.map((e) => `<span>${escapar(e.replace(/-/g, ' '))}</span>`).join('')}</div>` : ''}
+            <button class="enlace" type="button" data-editar-nota-id="${n.id}">Editar</button>
+          </div>`).join('') : `<p class="suave">${ayuda('perfil')} Las etiquetas se muestran como tus intereses.</p>`}
+      </section>
+
+      <section class="cristal seccion-sobre-ti" aria-labelledby="s-valores">
+        ${cabeza('valores', 'Valores', '+ Añadir valor')}
+        ${valores.length ? `<div class="valores">${valores.map((n) => `
+          <a class="valor" href="#/cerebro/nota/${n.id}"><strong>${escapar(n.titulo)}</strong>${n.contenido ? `<span>${escapar(extracto(n.contenido, 90))}</span>` : ''}</a>`).join('')}</div>` : `<p class="suave">${ayuda('valores')}</p>`}
+      </section>
+
+      <section class="cristal seccion-sobre-ti" aria-labelledby="s-metas">
+        ${cabeza('metas', 'Metas a largo plazo', '+ Añadir meta')}
+        ${metas.length ? `<div class="metas">${metas.map((n) => `
+          <a class="meta" href="#/cerebro/nota/${n.id}">
+            <span class="meta-plazo${n.horizonte ? '' : ' sin-plazo'}">${n.horizonte ? plazoDe(n.horizonte) : 'Sin plazo'}</span>
+            <span class="meta-texto"><strong>${escapar(n.titulo)}</strong>${n.contenido ? `<span>${escapar(extracto(n.contenido, 110))}</span>` : ''}</span>
+          </a>`).join('')}</div>` : `<p class="suave">${ayuda('metas')}</p>`}
+      </section>
+
+      <section class="cristal seccion-sobre-ti" aria-labelledby="s-reflexiones">
+        ${cabeza('reflexiones', 'Reflexiones', '+ Escribir')}
+        ${reflexiones.length ? `<div class="grupo-lista">${reflexiones.map((n) => `
+          <a class="fila-nota" href="#/cerebro/nota/${n.id}"><span class="suave">${hace(n.creado).replace(/^./, (c) => c.toUpperCase())}</span><span class="fila-nota-titulo">${escapar(n.titulo)}</span></a>`).join('')}</div>` : `<p class="suave">${ayuda('reflexiones')}</p>`}
+      </section>
     </div>`;
 }
-
