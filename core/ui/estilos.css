@@ -412,23 +412,59 @@ textarea {
 
 /* ---------- Pantalla de acceso ---------- */
 .acceso {
+  position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: var(--esp-5) var(--esp-4);
 }
+/* La entrada: el cielo y la ciudad de Orvia detrás de una tarjeta de cristal */
+.acceso,
+.acceso::before {
+  --cielo:
+    radial-gradient(70% 38% at 50% 100%, rgb(77 141 255 / 0.28), transparent 75%),
+    radial-gradient(60% 30% at 20% 90%, rgb(160 110 255 / 0.16), transparent 70%),
+    linear-gradient(180deg, #050a1c 0%, #0b1534 38%, #142048 72%, #1d2a5c 100%);
+}
+.acceso::before {
+  content: '';
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  background: var(--cielo);
+}
+.acceso::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(46vh, 520px);
+  background: url('ciudad.svg') center bottom / cover no-repeat;
+  pointer-events: none;
+}
 .acceso .caja {
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   display: grid;
   gap: var(--esp-5);
+  padding: var(--esp-6) var(--esp-5);
+  border-radius: var(--radio-xl);
+  border: 1px solid var(--cristal-linea);
+  background: linear-gradient(180deg, rgb(20 30 60 / 0.62), rgb(8 12 26 / 0.72));
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 30px 80px -30px rgb(0 0 0 / 0.8), 0 30px 90px -50px rgb(77 141 255 / 0.6);
 }
 .acceso .caja > .globo-escena {
   justify-self: start;
 }
 .acceso h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 2.75rem;
+  font-weight: 600;
+  letter-spacing: -0.045em;
 }
 .acceso form {
   display: grid;
@@ -749,12 +785,15 @@ textarea {
   right: 14px;
   bottom: 14px;
   max-width: 380px;
-  padding: 14px 16px;
-  border-radius: var(--radio-m);
-  background: rgb(14 15 18 / 0.82);
-  border: 1px solid var(--linea);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 16px 18px;
+  border-radius: var(--radio-l);
+  background:
+    radial-gradient(100% 120% at 100% 0%, color-mix(in srgb, var(--c, var(--acento)) 20%, transparent), transparent 60%),
+    linear-gradient(180deg, rgb(20 30 60 / 0.78), rgb(8 12 26 / 0.84));
+  border: 1px solid color-mix(in srgb, var(--c, var(--acento)) 35%, var(--cristal-linea));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 20px 50px rgb(0 0 0 / 0.5);
   display: grid;
   gap: 4px;
 }
@@ -1409,13 +1448,15 @@ body.con-hoja {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--esp-2) var(--esp-5) calc(env(safe-area-inset-bottom) + var(--esp-5));
-  border-radius: 24px 24px 0 0;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--mundo-1) 14%, #12151d), #10131a 40%);
-  border: 1px solid var(--cristal-linea);
+  border-radius: 28px 28px 0 0;
+  background:
+    radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--mundo-luz) 18%, transparent), transparent 70%),
+    linear-gradient(180deg, #111a33, #0a1022 45%);
+  border: 1px solid color-mix(in srgb, var(--mundo-luz) 22%, var(--cristal-linea));
   border-bottom: 0;
-  box-shadow: 0 -20px 60px rgb(0 0 0 / 0.45);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 -24px 70px rgb(0 0 0 / 0.55);
   transform: translateY(100%);
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--t-medio) var(--curva);
 }
 .hoja-capa.abierta .hoja-fondo {
   opacity: 1;
@@ -1524,11 +1565,17 @@ body.con-hoja {
   padding: 0 var(--esp-3);
   border-radius: 12px;
   border: 1px solid var(--cristal-linea);
-  background: var(--cristal);
+  background: var(--cristal-plano);
   color: var(--tinta);
   font: inherit;
   font-size: 0.9375rem;
   cursor: pointer;
+  transition: border-color var(--t-rapido) var(--curva), background var(--t-rapido) var(--curva), transform var(--t-rapido) var(--curva);
+}
+.segmento:active,
+.chip-opcion:active,
+.chip-alternar:active {
+  transform: scale(0.97);
 }
 .segmento .punto {
   margin-right: var(--esp-2);
@@ -1536,9 +1583,10 @@ body.con-hoja {
 .segmento[aria-pressed='true'],
 .chip-opcion[aria-pressed='true'],
 .chip-alternar[aria-pressed='true'] {
-  border-color: var(--mundo-acento);
-  background: color-mix(in srgb, var(--mundo-1) 30%, transparent);
-  font-weight: 700;
+  border-color: color-mix(in srgb, var(--mundo-luz) 70%, transparent);
+  background: color-mix(in srgb, var(--mundo-luz) 20%, transparent);
+  box-shadow: 0 0 18px -6px var(--mundo-luz);
+  font-weight: 600;
 }
 .chip-alternar {
   color: var(--tinta-suave);
@@ -1551,9 +1599,9 @@ body.con-hoja {
 .campo select {
   min-height: 48px;
   padding: 0 var(--esp-3);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--cristal-linea);
   border-radius: var(--radio-s);
-  background: var(--superficie);
+  background: rgb(4 6 11 / 0.55);
   font-size: 1rem;
 }
 .dos-campos > .campo {
@@ -1639,12 +1687,14 @@ body.con-hoja {
   max-width: 440px;
   margin: 0 auto;
   padding: var(--esp-3) var(--esp-4);
-  border-radius: 14px;
-  background: var(--superficie-alta);
-  border: 1px solid var(--linea);
+  border-radius: 16px;
+  background: rgb(14 20 38 / 0.86);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid rgb(72 226 255 / 0.25);
   color: var(--tinta);
   font-size: 0.9375rem;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.5), 0 0 24px -10px var(--cian);
 }
 .aviso.error {
   border-color: var(--peligro);
@@ -1841,9 +1891,9 @@ body.con-hoja {
 .campo select {
   min-height: 48px;
   padding: 0 var(--esp-3);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--cristal-linea);
   border-radius: var(--radio-s);
-  background: var(--superficie);
+  background: rgb(4 6 11 / 0.55);
   color: var(--tinta);
   font: inherit;
 }
@@ -2374,11 +2424,11 @@ button.an-fila { cursor: pointer; }
 .flotante {
   position: absolute;
   z-index: 3;
-  border: 1px solid var(--linea);
-  background: rgb(16 18 23 / 0.72);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  box-shadow: 0 14px 40px rgb(0 0 0 / 0.35);
+  border: 1px solid var(--cristal-linea);
+  background: linear-gradient(180deg, rgb(20 30 60 / 0.72), rgb(8 12 26 / 0.78));
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 20px 50px rgb(0 0 0 / 0.5);
 }
 .oficina-cabecera {
   top: calc(env(safe-area-inset-top) + var(--esp-4));
@@ -2603,8 +2653,8 @@ button.an-fila { cursor: pointer; }
     padding: 6px;
     gap: 2px;
     border-radius: 26px;
-    border: 1px solid var(--linea);
-    background: rgb(18 22 32 / 0.82);
+    border: 1px solid var(--cristal-linea);
+    background: rgb(10 16 34 / 0.78);
     backdrop-filter: blur(18px) saturate(1.3);
     -webkit-backdrop-filter: blur(18px) saturate(1.3);
     box-shadow: 0 12px 34px rgb(0 0 0 / 0.45);
@@ -2630,7 +2680,8 @@ button.an-fila { cursor: pointer; }
     text-overflow: ellipsis;
   }
   .pestanas.barra-inferior :is(button[aria-selected='true'], a[aria-current='page']) {
-    background: rgb(255 255 255 / 0.08);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--mundo-luz) 24%, transparent), color-mix(in srgb, var(--mundo-luz) 8%, transparent));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 0 20px -8px var(--mundo-luz);
     color: var(--mundo-claro);
     font-weight: 600;
   }
@@ -2663,13 +2714,13 @@ button.an-fila { cursor: pointer; }
   display: grid;
   min-width: 230px;
   padding: 6px;
-  border-radius: 18px;
-  border: 1px solid var(--linea);
-  background: rgb(18 22 32 / 0.92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
-  animation: menu-mas-entra 0.16s ease-out;
+  border-radius: 20px;
+  border: 1px solid var(--cristal-linea);
+  background: rgb(12 18 36 / 0.88);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 20px 50px rgb(0 0 0 / 0.55);
+  animation: menu-mas-entra var(--t-medio) var(--curva);
 }
 @keyframes menu-mas-entra { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
 .menu-mas button {
@@ -2833,12 +2884,19 @@ button.an-fila { cursor: pointer; }
 .campo textarea {
   width: 100%;
   padding: var(--esp-3);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--cristal-linea);
   border-radius: var(--radio-s);
-  background: var(--superficie);
+  background: rgb(4 6 11 / 0.55);
   color: var(--tinta);
   font: inherit;
   resize: vertical;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+}
+.campo textarea:focus-visible,
+.campo select:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--cian) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cian) 18%, transparent);
 }
 .chip-area[aria-pressed='true'] { border-color: var(--c); }
 
@@ -2847,10 +2905,16 @@ button.an-fila { cursor: pointer; }
   [data-mundo='accion'] .mundo-contenido { max-width: 1440px; padding-left: var(--esp-6); padding-right: var(--esp-6); }
   [data-mundo='accion'] .boton-mas { right: max(var(--esp-4), calc((100vw - 1440px) / 2 - 64px)); }
   .tira-dias { display: none; }
-  .semana-dias { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--esp-2); align-items: stretch; }
+  .semana-dias { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--esp-2); align-items: start; }
   .dia-columna:not([data-visible]) { display: block; }
-  .dia-columna { padding: var(--esp-3); min-height: 320px; }
-  .dia-columna.es-hoy { border-color: color-mix(in srgb, var(--mundo-acento) 60%, transparent); }
+  .dia-columna { padding: var(--esp-3); min-height: 220px; }
+  /* Hoy es la columna protagonista: más luz y un poco por encima de las demás */
+  .dia-columna.es-hoy {
+    border-color: color-mix(in srgb, var(--mundo-luz) 55%, transparent);
+    background: radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--mundo-luz) 18%, transparent), transparent 70%), var(--cristal);
+    box-shadow: var(--brillo-borde), var(--sombra-flotante), 0 20px 60px -30px var(--mundo-luz);
+    min-height: 320px;
+  }
   .dia-columna-cabecera { display: grid; gap: 0; }
   .dia-columna-cabecera h3 { font-size: 0.9375rem; }
   .dia-columna-cabecera .suave { font-size: 0.75rem; }

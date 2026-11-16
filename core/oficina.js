@@ -60,7 +60,8 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
 
   // ---------- Motor ----------
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, esMovil ? 1.75 : 2));
+  // Con brillo, la resolución se limita un poco para que vaya fluido en portátiles
+  renderer.setPixelRatio(Math.min(devicePixelRatio, esMovil ? 1.75 : post ? 1.5 : 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
