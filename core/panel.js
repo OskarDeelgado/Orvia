@@ -76,6 +76,20 @@ function montarTuDiaEn(caja, { raiz, alResumen } = {}) {
     .catch(() => { caja.hidden = true; });
 }
 
+// Jude (Segundo cerebro): su ficha dice cuántas notas e ideas tienes, y su monitor de la oficina también.
+function leerCerebroEn(raiz, alResumen) {
+  if (!MODULOS.some((m) => m.id === 'cerebro' && m.estado === 'activo')) return;
+  const leer = () => import('../modules/cerebro/resumen.js')
+    .then(({ leerResumenCerebro, situacionCerebro }) => leerResumenCerebro().then((r) => {
+      if (!raiz.isConnected) return removeEventListener('orvia:cerebro', leer);
+      raiz.querySelectorAll('[data-mundo="cerebro"] .agente-situacion, [data-sala="cerebro"] .agente-situacion').forEach((el) => { el.textContent = situacionCerebro(r); });
+      alResumen?.(r);
+    }))
+    .catch(() => {});
+  addEventListener('orvia:cerebro', leer);
+  leer();
+}
+
 function cabecera(nombre) {
   return `
     <header class="panel-cabecera">
@@ -142,6 +156,7 @@ function pintarPanelMovil(raiz, { nombre }) {
     nota.textContent = 'Las cifras aparecerán cuando pongas en marcha Finanzas.';
   });
   montarTuDiaEn(raiz.querySelector('#tu-dia'), { raiz });
+  leerCerebroEn(raiz);
   return () => {};
 }
 
@@ -184,6 +199,8 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
   const cajaDia = raiz.querySelector('#tu-dia');
   if (cajaDia) montarTuDiaEn(cajaDia, { raiz, alResumen: (r) => { ultimoResumen = r; if (!cancelado) oficina?.actualizarDatos({ accion: r }); } });
   else import('../modules/accion/resumen.js').then(({ leerResumenDia }) => leerResumenDia()).then((r) => { ultimoResumen = r; if (!cancelado) oficina?.actualizarDatos({ accion: r }); }).catch(() => {});
+  let ultimoCerebro = null;
+  leerCerebroEn(raiz, (r) => { ultimoCerebro = r; if (!cancelado) oficina?.actualizarDatos({ cerebro: r }); });
 
   // Las fichas entran en el despacho de cada agente.
   raiz.querySelector('.equipo').addEventListener('click', (ev) => {
@@ -202,6 +219,7 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
       oficina = o;
       leerDatosClave().then((datos) => { if (!cancelado) o.actualizarDatos(datos); });
       if (ultimoResumen) o.actualizarDatos({ accion: ultimoResumen });
+      if (ultimoCerebro) o.actualizarDatos({ cerebro: ultimoCerebro });
     })
     .catch((e) => {
       console.error(e);

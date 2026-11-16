@@ -5,7 +5,7 @@
 //   #/cerebro/sobre-ti      Sobre ti por secciones
 //   #/cerebro/nota/<id>     Una nota abierta (nota.js)
 
-import { escapar } from '../../core/ui/componentes.js';
+import { escapar, aviso } from '../../core/ui/componentes.js';
 import { TIPOS, ESTADOS, SECCIONES, TIPOS_GRUPO, nombreDe, plazoDe, leerCerebro, hace } from './datos.js';
 import { extracto, pintarTexto } from './formato.js';
 import { abrirHojaNota, abrirHojaGrupo } from './hoja.js';
@@ -103,6 +103,17 @@ export async function montarCerebro(contenedor, seccion, id) {
     else if (d.editarNotaId) abrirHojaNota({ nota: datos.notas.find((n) => n.id === d.editarNotaId) });
     else if (d.editarGrupo) abrirHojaGrupo({ grupo: datos.porGrupo[d.editarGrupo] });
     else if (d.limpiarBusqueda != null) { filtro.texto = ''; pintar(); }
+    else if (d.exportar != null) {
+      b.disabled = true;
+      try {
+        const { exportarNotas } = await import('./exportar.js');
+        const n = await exportarNotas();
+        aviso(`${n} ${n === 1 ? 'nota exportada' : 'notas exportadas'}`);
+      } catch (err) {
+        aviso(err.message, { error: true });
+      }
+      b.disabled = false;
+    }
   });
   // El buscador repinta solo la lista, para no perder el foco al escribir.
   contenedor.addEventListener('input', (e) => {
@@ -165,7 +176,8 @@ function pintarBiblioteca(contenedor, datos) {
       <button type="button" class="chip-filtro" data-filtro-tipo="" aria-pressed="${!filtro.tipo}">Todo</button>
       ${Object.entries(TIPOS).map(([v, t]) => `<button type="button" class="chip-filtro" data-filtro-tipo="${v}" aria-pressed="${filtro.tipo === v}" style="--tipo:${t.color}">${t.plural} · ${cuenta(v)}</button>`).join('')}
     </div>
-    <div id="lista-biblioteca">${listaBiblioteca(datos)}</div>`;
+    <div id="lista-biblioteca">${listaBiblioteca(datos)}</div>
+    ${datos.notas.length ? `<p class="exportar-notas"><button class="enlace" type="button" data-exportar>Exportar tus notas a Markdown</button><span class="suave">Un .zip con un archivo por nota, que abre cualquier app de notas.</span></p>` : ''}`;
 }
 
 // ---------- Ideas ----------

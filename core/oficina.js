@@ -223,6 +223,8 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
         }
       } else if (tipo === 'accion' && datos.accion) {
         pintarDiaAccion(ctx, W, H, color, datos.accion);
+      } else if (tipo === 'cerebro' && datos.cerebro) {
+        pintarBiblioteca(ctx, W, H, color, datos.cerebro);
       } else if (tipo === 'accion') {
         for (let col = 0; col < 3; col++) {
           ctx.fillStyle = 'rgba(255,255,255,0.05)';
@@ -246,6 +248,34 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
       }
     }
     p.tex.needsUpdate = true;
+  }
+
+  // Monitor de Jude: tu biblioteca (notas, ideas vivas, aprendizajes y la última nota).
+  function pintarBiblioteca(ctx, W, H, color, c) {
+    const fuente = (peso, px) => `${peso} ${px}px Manrope, system-ui, sans-serif`;
+    ctx.fillStyle = '#f2f4f7';
+    ctx.font = fuente(800, 15);
+    ctx.fillText('BIBLIOTECA', W - 112, 19);
+    const cifras = [[c.notas, 'notas', color], [c.ideas, 'ideas vivas', '#fcd34d'], [c.aprendizajes, 'aprendizajes', '#5eead4']];
+    cifras.forEach(([n, texto, tono], i) => {
+      const x = 16 + i * ((W - 32) / 3);
+      ctx.fillStyle = tono;
+      ctx.font = fuente(800, 40);
+      ctx.fillText(String(n), x, 92);
+      ctx.fillStyle = '#9aa1ad';
+      ctx.font = fuente(600, 13);
+      ctx.fillText(texto, x, 114);
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(16, 136, W - 32, 1);
+    ctx.fillStyle = '#9aa1ad';
+    ctx.font = fuente(600, 13);
+    ctx.fillText(c.ultima ? 'Última nota' : 'Sin notas todavía', 16, 164);
+    if (c.ultima) {
+      ctx.fillStyle = '#f2f4f7';
+      ctx.font = fuente(600, 19);
+      ctx.fillText(c.ultima.titulo, 16, 190, W - 32);
+    }
   }
 
   // Monitor de Endrick: tu día (próximo evento, tareas y hábitos de la semana).
@@ -725,7 +755,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     /** Cambia los datos clave de la pantalla de tu despacho (llegan después de montar). */
     actualizarDatos(nuevos) {
       Object.assign(datos, nuevos);
-      for (const p of pantallas) if (p.tipo === 'datos' || (nuevos.accion && p.tipo === 'accion')) pintarPantalla(p);
+      for (const p of pantallas) if (p.tipo === 'datos' || (nuevos.accion && p.tipo === 'accion') || (nuevos.cerebro && p.tipo === 'cerebro')) pintarPantalla(p);
       if (nuevos.accion) {
         const nivel = nuevos.accion.nivel?.nivel || 1;
         ponerNivel(nivel);
