@@ -1,5 +1,5 @@
-// Oficina 3D «Órbita»: el Panel de Orvia en el ordenador (y, a petición, en el móvil).
-// Un campus circular flotando en la oscuridad: tu despacho es el núcleo, en el centro, y
+// Oficina 3D de Orvia: el Panel en el ordenador (y, a petición, en el móvil).
+// La azotea de una torre sobre una ciudad al anochecer: tu despacho es el núcleo, en el centro, y
 // cada departamento es una plataforma redonda a distinta altura, unida al núcleo por un
 // puente de luz. Un toque acerca la cámara; un segundo toque (o el botón de la ficha)
 // abre el módulo.
@@ -71,11 +71,11 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   escena.prepend(renderer.domElement);
 
   const mundo = new THREE.Scene();
-  mundo.background = new THREE.Color('#04060b');
-  mundo.fog = new THREE.FogExp2('#04060b', 0.021);
+  mundo.background = new THREE.Color('#0d1838');
+  mundo.fog = new THREE.FogExp2('#111d44', 0.0115);
 
   const camara = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
-  const VISTA_ANCHA = { pos: new THREE.Vector3(0, 21, 27), obj: new THREE.Vector3(0, 0.2, 1.4) };
+  const VISTA_ANCHA = { pos: new THREE.Vector3(0, 17, 29), obj: new THREE.Vector3(0, 0.6, 0.6) };
   const VISTA_ALTA = { pos: new THREE.Vector3(0, 33, 14), obj: new THREE.Vector3(0, 0, 1) };
   let vistaGeneral = VISTA_ANCHA;
   camara.position.copy(vistaGeneral.pos);
@@ -85,7 +85,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   controles.enableDamping = true;
   controles.dampingFactor = 0.08;
   controles.minDistance = 7;
-  controles.maxDistance = 46;
+  controles.maxDistance = 52;
   controles.minPolarAngle = 0.12;
   controles.maxPolarAngle = 1.22;
   controles.enablePan = !esMovil;
@@ -107,7 +107,7 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
   sol.position.set(-10, 24, 12);
   sol.castShadow = true;
   sol.shadow.mapSize.set(esMovil ? 1024 : 2048, esMovil ? 1024 : 2048);
-  Object.assign(sol.shadow.camera, { left: -17, right: 17, top: 17, bottom: -17, near: 1, far: 70 });
+  Object.assign(sol.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 70 });
   sol.shadow.bias = -0.0005;
   mundo.add(sol);
 
@@ -163,10 +163,85 @@ export async function montarOficina(escena, { modulos, nombreUsuario, datos, alA
     const tex = apuntar(new THREE.CanvasTexture(c));
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
-    const suelo = new THREE.Mesh(geo(new THREE.CircleGeometry(26, 96)), apuntar(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.4 })));
+    const suelo = new THREE.Mesh(geo(new THREE.CircleGeometry(18.5, 96)), apuntar(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.4 })));
     suelo.rotation.x = -Math.PI / 2;
     suelo.receiveShadow = true;
     mundo.add(suelo);
+    // La azotea es la cima de una torre: su canto se ilumina y el cuerpo baja hasta la ciudad
+    const torre = new THREE.Mesh(geo(new THREE.CylinderGeometry(18.5, 16, 70, 96, 1, true)), apuntar(new THREE.MeshStandardMaterial({ color: '#0a1124', roughness: 0.4, metalness: 0.6 })));
+    torre.position.y = -35.01;
+    mundo.add(torre);
+    const canto = new THREE.Mesh(geo(new THREE.TorusGeometry(18.5, 0.06, 8, 160)), apuntar(new THREE.MeshBasicMaterial({ color: '#6aa2ff', toneMapped: false })));
+    canto.rotation.x = -Math.PI / 2;
+    mundo.add(canto);
+  }
+
+  // ---------- Cielo y ciudad al anochecer ----------
+  {
+    // Cúpula de cielo con degradado: horizonte violeta azulado, cénit casi negro
+    const cielo = new THREE.SphereGeometry(320, 32, 16);
+    const colores = [];
+    const alto = new THREE.Color('#050a1c'), medio = new THREE.Color('#14214e'), horizonte = new THREE.Color('#3a3f86');
+    const pos = cielo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const k = THREE.MathUtils.clamp(pos.getY(i) / 320, -1, 1);
+      const c = k > 0.12 ? medio.clone().lerp(alto, Math.min(1, (k - 0.12) / 0.6)) : horizonte.clone().lerp(medio, Math.max(0, (k + 0.05) / 0.17));
+      colores.push(c.r, c.g, c.b);
+    }
+    cielo.setAttribute('color', new THREE.Float32BufferAttribute(colores, 3));
+    mundo.add(new THREE.Mesh(geo(cielo), apuntar(new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }))));
+
+    // Fachadas con ventanas encendidas (una textura que se repite)
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#060a16';
+    ctx.fillRect(0, 0, 128, 256);
+    const tonos = ['#ffd58a', '#ffe7b8', '#9fd0ff', '#48e2ff', '#c9d8ff'];
+    for (let y = 6; y < 250; y += 12) for (let x = 6; x < 124; x += 10) {
+      if (Math.random() < 0.34) { ctx.globalAlpha = 0.35 + Math.random() * 0.65; ctx.fillStyle = tonos[Math.floor(Math.random() * tonos.length)]; ctx.fillRect(x, y, 5, 7); }
+    }
+    ctx.globalAlpha = 1;
+    const ventanas = apuntar(new THREE.CanvasTexture(c));
+    ventanas.colorSpace = THREE.SRGBColorSpace;
+    ventanas.wrapS = ventanas.wrapT = THREE.RepeatWrapping;
+    const fachada = apuntar(new THREE.MeshStandardMaterial({ color: '#0b1226', roughness: 0.6, metalness: 0.3, emissive: '#ffffff', emissiveMap: ventanas, emissiveIntensity: 0.75 }));
+    // Cuatro tipos de edificio; las ventanas mantienen su tamaño en todos
+    const tipos = [[7, 40], [10, 60], [12, 85], [6, 110]].map(([w, h]) => {
+      const g = geo(new THREE.BoxGeometry(w, h, w));
+      const uv = g.attributes.uv, n = g.attributes.normal;
+      for (let i = 0; i < uv.count; i++) {
+        if (Math.abs(n.getY(i)) > 0.5) uv.setXY(i, 0.01, 0.01); // azoteas oscuras
+        else uv.setXY(i, uv.getX(i) * (w / 6), uv.getY(i) * (h / 12));
+      }
+      g.translate(0, h / 2, 0);
+      return g;
+    });
+    const total = esMovil ? 220 : 480;
+    const porTipo = tipos.map(() => []);
+    let semilla = 11;
+    const azar = () => ((semilla = (semilla * 9301 + 49297) % 233280) / 233280);
+    for (let i = 0; i < total; i++) {
+      const r = 26 + Math.pow(azar(), 0.8) * 150, a = azar() * Math.PI * 2;
+      const tipo = Math.floor(azar() * tipos.length);
+      // La azotea es lo más alto: cerca, los edificios quedan muy por debajo; a lo lejos asoma algún rascacielos
+      const cima = r < 60 ? -26 + azar() * 16 : r < 110 ? -18 + azar() * 22 : -10 + azar() * (azar() < 0.15 ? 52 : 26);
+      porTipo[tipo].push({ x: Math.cos(a) * r, z: Math.sin(a) * r, giro: azar() * Math.PI, escala: 0.8 + azar() * 0.45, cima });
+    }
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Vector3(), p = new THREE.Vector3();
+    tipos.forEach((g, t) => {
+      const lista = porTipo[t];
+      const inst = new THREE.InstancedMesh(g, fachada, lista.length);
+      lista.forEach((b, i) => {
+        // Los cercanos quedan por debajo de la azotea; los lejanos asoman por el horizonte
+        const base = b.cima - [40, 60, 85, 110][t] * b.escala;
+        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), b.giro);
+        e.set(b.escala, b.escala, b.escala);
+        p.set(b.x, base, b.z);
+        inst.setMatrixAt(i, m4.compose(p, q, e));
+      });
+      mundo.add(inst);
+    });
   }
 
   // Polvo de luz flotando (se queda quieto con «Reducir movimiento»)

@@ -1,5 +1,5 @@
 /* =====================================================================
-   Orvia · sistema de diseño «Órbita» (solo modo oscuro)
+   Orvia · sistema de diseño (solo modo oscuro)
    Oscuro tecnológico: vacío casi negro, antracita en capas, azul eléctrico
    y cian solo como luz (foco, estado activo, indicadores vivos).
    Cada departamento es un "mundo" con su color, que se activa con
@@ -493,35 +493,14 @@ textarea {
   flex-direction: column;
   gap: var(--esp-4);
 }
-/* El Panel del móvil es el núcleo: luz azul arriba y suelo de rejilla abajo */
+/* El Panel del móvil: el mismo cielo y la misma ciudad, con la luz de Dirección */
 .panel::before {
   content: '';
   position: fixed;
   z-index: -1;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(90% 45% at 85% -5%, rgb(77 141 255 / 0.28), transparent 70%),
-    radial-gradient(70% 35% at 0% 40%, rgb(139 123 255 / 0.12), transparent 70%),
-    var(--vacio);
-}
-.panel::after {
-  content: '';
-  position: fixed;
-  z-index: -1;
-  left: -50vw;
-  right: -50vw;
-  bottom: -14vh;
-  height: 55vh;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(90deg, rgb(77 141 255 / 0.2) 0 1px, transparent 1px 64px),
-    repeating-linear-gradient(0deg, rgb(77 141 255 / 0.14) 0 1px, transparent 1px 64px);
-  transform: perspective(480px) rotateX(64deg);
-  transform-origin: 50% 100%;
-  -webkit-mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
-  mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
-  opacity: 0.5;
+  background: var(--cielo);
 }
 .panel-cabecera {
   display: flex;
@@ -806,37 +785,44 @@ textarea {
   min-height: 100dvh;
   overflow: hidden;
   isolation: isolate;
-  background:
-    radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--mundo-oscuro) 55%, transparent), transparent 60%),
-    var(--mundo-fondo);
+  background: var(--cielo);
 }
-/* Suelo de rejilla en perspectiva: da profundidad sin quitar protagonismo */
-.mundo::before {
+/* Fondo de Orvia: una ciudad al anochecer, vista desde lo alto de la torre.
+   El cielo toma el tono del departamento; la ciudad es la misma en todos. */
+.mundo,
+.panel {
+  --cielo:
+    radial-gradient(70% 38% at 50% 100%, color-mix(in srgb, var(--mundo-luz) 26%, transparent), transparent 75%),
+    radial-gradient(60% 30% at 20% 90%, rgb(160 110 255 / 0.14), transparent 70%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--mundo-oscuro) 55%, #040814) 0%,
+      color-mix(in srgb, var(--mundo-oscuro) 30%, #0a1330) 38%,
+      #142048 72%,
+      #1d2a5c 100%);
+}
+.mundo::before,
+.panel::after {
   content: '';
   position: fixed;
   z-index: -1;
-  left: -50vw;
-  right: -50vw;
-  bottom: -18vh;
-  height: 70vh;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(46vh, 520px);
   pointer-events: none;
-  background:
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--mundo-luz) 22%, transparent) 0 1px, transparent 1px 72px),
-    repeating-linear-gradient(0deg, color-mix(in srgb, var(--mundo-luz) 16%, transparent) 0 1px, transparent 1px 72px);
-  transform: perspective(520px) rotateX(64deg);
-  transform-origin: 50% 100%;
-  -webkit-mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
-  mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
-  opacity: 0.55;
+  background: url('ciudad.svg') center bottom / cover no-repeat;
+  opacity: 0.95;
 }
-/* Línea de horizonte y viñeta superior */
+/* Neblina sobre la ciudad para que el contenido siempre se lea */
 .mundo::after {
   content: '';
   position: fixed;
   z-index: -1;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), transparent 22%);
+  background:
+    linear-gradient(180deg, rgb(2 4 12 / 0.35), transparent 26%),
+    linear-gradient(0deg, rgb(6 10 26 / 0.55), transparent 30%);
 }
 .mundo .aurora {
   position: fixed;
@@ -3469,7 +3455,7 @@ button.an-fila { cursor: pointer; }
 .exportar-notas .suave { font-size: 0.8125rem; }
 
 /* =====================================================================
-   Órbita · capas destacadas, respuesta al cursor y entrada orquestada
+   Orvia · capas destacadas, respuesta al cursor y entrada orquestada
    ===================================================================== */
 
 /* Paneles protagonistas: la luz del departamento entra por una esquina */
