@@ -26,6 +26,7 @@ export const TABLAS = [
   'hitos',
   'calendarios',
   'notas',
+  'notas_grupos',
   'enlaces',
   'fin_config',
   'fin_sueldos',
