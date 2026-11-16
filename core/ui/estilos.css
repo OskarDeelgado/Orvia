@@ -3592,3 +3592,24 @@ a.cristal,
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
+
+/* ---------- Listas (Acción) ---------- */
+.listas-rejilla { display: grid; gap: var(--esp-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.lista-tarjeta { display: grid; gap: var(--esp-2); align-content: start; padding: var(--esp-4); color: var(--tinta); text-decoration: none; }
+.lista-tarjeta > * { margin: 0; }
+.lista-tarjeta h4 { font-size: 1.125rem; line-height: 1.25; }
+.lista-tarjeta:focus-visible { outline: 2px solid var(--mundo-acento); outline-offset: 2px; }
+.lista-muestra { list-style: none; padding: 0; display: grid; gap: 4px; font-size: 0.9375rem; color: var(--tinta-suave); }
+.lista-muestra li { position: relative; padding-left: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-muestra li:not(.suave)::before {
+  content: ''; position: absolute; left: 0; top: 0.42em; width: 10px; height: 10px;
+  border: 1.5px solid color-mix(in srgb, var(--mundo-1) 70%, transparent); border-radius: 3px;
+}
+.lista-pie { font-size: 0.8125rem; color: var(--tinta-suave); }
+.lista-pie.completa { color: var(--mundo-claro); font-weight: 600; }
+.lista-ficha { display: grid; gap: var(--esp-3); padding: var(--esp-4); max-width: 720px; }
+.lista-ficha h2 { margin: 0; overflow-wrap: anywhere; }
+.lista-vacia { margin: var(--esp-2) 0; }
+.lista-hechos { margin-top: var(--esp-3); padding-top: var(--esp-3); border-top: 1px solid var(--cristal-linea); }
+.lista-hechos .grupo-titulo { margin: 0; }
+.lista-ficha .tarea-texto { min-height: 44px; }

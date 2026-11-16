@@ -14,7 +14,7 @@ export const cliente = window.supabase.createClient(SUPABASE_URL, SUPABASE_CLAVE
   },
 });
 
-// Todas las tablas: núcleo (001), Finanzas (002), comodines de hábitos (004), hitos (005) y calendarios (006). La copia de seguridad las incluye todas.
+// Todas las tablas: núcleo (001), Finanzas (002), comodines de hábitos (004), hitos (005), calendarios (006) y listas (009). La copia de seguridad las incluye todas.
 export const TABLAS = [
   'areas',
   'objetivos',
@@ -25,6 +25,8 @@ export const TABLAS = [
   'habitos_comodines',
   'hitos',
   'calendarios',
+  'listas',
+  'listas_elementos',
   'notas',
   'notas_grupos',
   'enlaces',

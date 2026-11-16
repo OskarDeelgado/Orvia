@@ -154,3 +154,26 @@ export async function eliminarProyecto(id) {
 export const crearHito = ({ proyecto_id, titulo, fecha = null, orden = 0 }) => crear('hitos', { proyecto_id, titulo, fecha, orden });
 export const guardarHito = (id, cambios) => actualizar('hitos', id, cambios);
 export const eliminarHito = (id) => archivar('hitos', id);
+
+// ---------- Listas (supabase/009_listas.sql) ----------
+
+/** Todas tus listas con sus elementos (los quitados con «Quitar los hechos» no se leen). */
+export async function leerListas() {
+  const [listas, elementos] = await Promise.all([
+    listar('listas', { orden: 'orden' }),
+    listar('listas_elementos', { orden: 'orden' }),
+  ]);
+  return { listas, elementos };
+}
+export const crearLista = ({ nombre, orden = 0 }) => crear('listas', { nombre, orden });
+export const guardarLista = (id, cambios) => actualizar('listas', id, cambios);
+/** Archiva la lista y sus elementos (siguen en la copia de seguridad). */
+export async function eliminarLista(id) {
+  const elementos = await listar('listas_elementos', { filtros: { lista_id: id } });
+  for (const x of elementos) await archivar('listas_elementos', x.id);
+  await archivar('listas', id);
+}
+export const crearElemento = ({ lista_id, texto, orden = 0 }) => crear('listas_elementos', { lista_id, texto, orden });
+export const guardarElemento = (id, cambios) => actualizar('listas_elementos', id, cambios);
+export const marcarElemento = (id, hecho) => actualizar('listas_elementos', id, { hecho, hecho_en: hecho ? new Date().toISOString() : null });
+export const quitarElemento = (id) => archivar('listas_elementos', id);

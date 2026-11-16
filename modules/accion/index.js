@@ -2,7 +2,8 @@
 // Bloque 1: tu semana con tareas y la bandeja «Sin fecha».
 // Bloque 2: hábitos con XP, niveles, rachas por semanas, comodín y logros.
 // Bloque 3: proyectos con hitos y tareas (las que tienen fecha salen en tu semana).
-// Llega después: tu calendario del iPhone.
+// Bloque 4: tu calendario del iPhone (solo lectura).
+// Listas: casillas sencillas («Comprar después de Navidad»), migración 009.
 
 import { montarSemana, diaPropuesto } from './semana.js';
 import { navAccion } from './nav.js';
@@ -38,15 +39,19 @@ export default {
       return '#/accion/habitos';
     },
   },
-  // #/accion → tu semana · #/accion/habitos → hábitos · #/accion/proyectos[/<id>] → proyectos
+  // #/accion → tu semana · #/accion/habitos → hábitos · #/accion/proyectos[/<id>] → proyectos · #/accion/listas[/<id>] → listas
   async montar(contenedor, { sub } = {}) {
-    const seccion = sub === 'proyectos' || sub === 'habitos' ? sub : 'semana';
+    const seccion = ['proyectos', 'listas', 'habitos'].includes(sub) ? sub : 'semana';
     contenedor.innerHTML = `${navAccion(seccion)}<div id="panel-accion" data-vista="${seccion}"></div>`;
     const panel = contenedor.querySelector('#panel-accion');
     if (seccion === 'proyectos') {
       const id = location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[2] || null;
       const { montarProyectos } = await import('./proyectos.js');
       await montarProyectos(panel, id);
+    } else if (seccion === 'listas') {
+      const id = location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[2] || null;
+      const { montarListas } = await import('./listas.js');
+      await montarListas(panel, id);
     } else if (seccion === 'habitos') {
       const { montarHabitos } = await import('./habitos.js');
       await montarHabitos(panel);
