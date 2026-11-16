@@ -30,7 +30,7 @@ export default {
   agente: {
     nombre: 'Zack',
     puesto: 'Director financiero',
-    color: '#818cf8',
+    color: '#8b7bff',
     tarea: 'Lleva tus sobres, el Sobrante, el ahorro y las inversiones.',
     situacion: 'En construcción · lista en diciembre',
   },

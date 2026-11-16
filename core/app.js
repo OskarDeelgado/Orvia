@@ -318,6 +318,10 @@ function pintarMundo({ id, titulo }) {
     setTimeout(soltar, 900);
   }
   origenZoom = null;
+  // Entrada orquestada de paneles solo al abrir el departamento (no en cada repintado).
+  const nuevoMundo = raiz.querySelector('.mundo');
+  nuevoMundo.classList.add('recien');
+  setTimeout(() => nuevoMundo.classList.remove('recien'), 1100);
   return raiz.querySelector('#contenido');
 }
 

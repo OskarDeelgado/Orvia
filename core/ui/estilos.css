@@ -1,24 +1,26 @@
 /* =====================================================================
-   Orvia · sistema de diseño común (solo modo oscuro)
-   El Panel es el centro neutro en grafito. Cada módulo es un "mundo"
-   con su propio color, que se activa con data-mundo="<id>".
-   Ningún módulo define colores propios fuera de estas variables.
+   Orvia · sistema de diseño «Órbita» (solo modo oscuro)
+   Oscuro tecnológico: vacío casi negro, antracita en capas, azul eléctrico
+   y cian solo como luz (foco, estado activo, indicadores vivos).
+   Cada departamento es un "mundo" con su color, que se activa con
+   data-mundo="<id>". Ningún módulo define colores propios fuera de estas
+   variables. Tres alturas: plano (fondo), capa (paneles) y flotante.
    ===================================================================== */
 
 @font-face {
-  font-family: 'Manrope';
+  font-family: 'Geist';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 800;
-  src: url('../../vendor/fuentes/manrope-latin-wght-normal.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  src: url('../../vendor/fuentes/geist-latin-wght-normal.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Manrope';
+  font-family: 'Geist';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 800;
-  src: url('../../vendor/fuentes/manrope-latin-ext-wght-normal.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  src: url('../../vendor/fuentes/geist-latin-ext-wght-normal.woff2') format('woff2-variations');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
@@ -26,44 +28,66 @@
 :root {
   color-scheme: dark;
 
-  /* Grafito: el Panel y lo neutro */
-  --fondo: #0e0f12;
-  --superficie: #16181d;
-  --superficie-alta: #1c1f26;
-  --linea: #262a33;
-  --linea-suave: #1f232b;
-  --tinta: #f2f4f7;
-  --tinta-suave: #9aa1ad;
-  --tinta-apagada: #8b93a1;
-  --acento: #8ab4ff;
-  --acento-tinta: #0e0f12;
-  --peligro: #f08a7e;
-  --exito: #7dd3a8;
-  --alerta: #f5a524;
+  /* Vacío y antracita: de lo más profundo a lo más cercano */
+  --vacio: #04060b;
+  --fondo: #070a11;
+  --superficie: #0e1320;
+  --superficie-alta: #151c2c;
+  --linea: rgb(148 170 220 / 0.14);
+  --linea-suave: rgb(148 170 220 / 0.08);
+  --tinta: #eaf0fa;
+  --tinta-suave: #9aa8bd;
+  --tinta-apagada: #8290a6;
+
+  /* Luz tecnológica: el azul eléctrico manda, el cian solo ilumina */
+  --marino: #0b1a3a;
+  --electrico: #4d8dff;
+  --cian: #48e2ff;
+  --acento: var(--electrico);
+  --acento-tinta: #04060b;
+  --peligro: #ff8a7a;
+  --exito: #3ddc97;
+  --alerta: #ffb547;
+
+  /* Departamentos: cada uno con su color, todos con la misma luz */
+  --dep-direccion: #4d8dff;
+  --dep-finanzas: #8b7bff;
+  --dep-accion: #2fd28f;
+  --dep-cerebro: #f2b33d;
+  --dep-comun: #ff9a62;
 
   /* Colores de áreas de vida (etiquetas y filtros) */
   --area-azul: #7aa2f7;
-  --area-verde: #7dd3a8;
-  --area-violeta: #b49af0;
-  --area-ambar: #e0b25c;
-  --area-coral: #f08c78;
-  --area-cian: #5cc6db;
+  --area-verde: #5fd3a3;
+  --area-violeta: #a99bf5;
+  --area-ambar: #e8b65c;
+  --area-coral: #f58f7a;
+  --area-cian: #5fcfe3;
 
-  /* Mundo por defecto (neutro): lo sobrescribe cada módulo */
+  /* Mundo por defecto (Dirección): lo sobrescribe cada departamento */
   --mundo-fondo: var(--fondo);
-  --mundo-1: #1e2a4d;
-  --mundo-2: #1a2133;
-  --mundo-acento: var(--acento);
-  --mundo-claro: #c7d2fe;
-  --mundo-oscuro: #1e1b4b;
-  --cristal: rgb(255 255 255 / 0.06);
-  --cristal-linea: rgb(255 255 255 / 0.11);
+  --mundo-1: #2a5bd7;
+  --mundo-2: #1b3a8a;
+  --mundo-acento: #7fb0ff;
+  --mundo-claro: #c4d7ff;
+  --mundo-oscuro: #0b1a3a;
+  --mundo-luz: var(--dep-direccion);
 
-  --fuente: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Cristal: tres alturas */
+  --cristal: linear-gradient(180deg, rgb(160 185 255 / 0.065), rgb(160 185 255 / 0.025) 70%);
+  --cristal-plano: rgb(160 185 255 / 0.035);
+  --cristal-linea: rgb(160 185 255 / 0.13);
+  --brillo-borde: inset 0 1px 0 rgb(255 255 255 / 0.07);
+  --sombra-capa: 0 18px 44px -22px rgb(0 0 0 / 0.75);
+  --sombra-flotante: 0 28px 70px -24px rgb(0 0 0 / 0.85), 0 0 0 1px rgb(160 185 255 / 0.06);
 
-  --radio-s: 10px;
+  --fuente: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Radios por jerarquía: lo grande, más redondo */
+  --radio-s: 12px;
   --radio-m: 18px;
   --radio-l: 24px;
+  --radio-xl: 30px;
 
   --esp-1: 4px;
   --esp-2: 8px;
@@ -72,32 +96,42 @@
   --esp-5: 20px;
   --esp-6: 32px;
   --esp-7: 48px;
+
+  /* Movimiento */
+  --curva: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --curva-salida: cubic-bezier(0.4, 0, 1, 1);
+  --t-rapido: 140ms;
+  --t-medio: 240ms;
+  --t-lento: 460ms;
 }
 
-/* Mundos de cada módulo */
+/* Cada departamento: un fondo casi negro teñido, dos luces y un acento */
 [data-mundo='finanzas'] {
-  --mundo-fondo: #0b1020;
-  --mundo-1: #4f46e5;
-  --mundo-2: #7c3aed;
-  --mundo-acento: #a5b4fc;
-  --mundo-claro: #c7d2fe;
-  --mundo-oscuro: #312e81;
+  --mundo-fondo: #070712;
+  --mundo-1: #6d5dfc;
+  --mundo-2: #3b2fb0;
+  --mundo-acento: #b3a9ff;
+  --mundo-claro: #d6d0ff;
+  --mundo-oscuro: #241b6b;
+  --mundo-luz: var(--dep-finanzas);
 }
 [data-mundo='accion'] {
-  --mundo-fondo: #08130f;
-  --mundo-1: #16a34a;
-  --mundo-2: #0d9488;
-  --mundo-acento: #86efac;
-  --mundo-claro: #bbf7d0;
-  --mundo-oscuro: #14532d;
+  --mundo-fondo: #040d0b;
+  --mundo-1: #13a86e;
+  --mundo-2: #0b7f73;
+  --mundo-acento: #7cf0bd;
+  --mundo-claro: #c2f7df;
+  --mundo-oscuro: #0b3d2c;
+  --mundo-luz: var(--dep-accion);
 }
 [data-mundo='cerebro'] {
-  --mundo-fondo: #140f06;
-  --mundo-1: #d97706;
-  --mundo-2: #b45309;
-  --mundo-acento: #fcd34d;
-  --mundo-claro: #fde68a;
-  --mundo-oscuro: #78350f;
+  --mundo-fondo: #0d0904;
+  --mundo-1: #d48a14;
+  --mundo-2: #9a5a0c;
+  --mundo-acento: #ffd27a;
+  --mundo-claro: #ffe6b3;
+  --mundo-oscuro: #5a3407;
+  --mundo-luz: var(--dep-cerebro);
 }
 
 /* ---------- Base ---------- */
@@ -108,25 +142,30 @@
 }
 html {
   -webkit-text-size-adjust: 100%;
-  background: var(--fondo);
+  background: var(--vacio);
 }
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--fondo);
+  background: var(--vacio);
   color: var(--tinta);
   font-family: var(--fuente);
   font-size: 16px;
   line-height: 1.5;
+  font-feature-settings: 'ss01' on;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+}
+::selection {
+  background: color-mix(in srgb, var(--cian) 35%, transparent);
 }
 h1,
 h2,
 h3 {
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   margin: 0;
 }
 h1 {
@@ -150,9 +189,9 @@ textarea {
   color: inherit;
 }
 :focus-visible {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--cian);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .oculto-visual {
   position: absolute !important;
@@ -170,7 +209,7 @@ textarea {
 }
 .cifra {
   font-weight: 300;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.045em;
   font-variant-numeric: tabular-nums;
   line-height: 1.05;
 }
@@ -197,6 +236,7 @@ textarea {
 
 /* ---------- Botones ---------- */
 .boton {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -205,25 +245,41 @@ textarea {
   padding: 0 var(--esp-5);
   border: 1px solid transparent;
   border-radius: 14px;
-  background: var(--acento);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mundo-luz) 100%, white 14%), var(--mundo-luz));
   color: var(--acento-tinta);
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   cursor: pointer;
   text-decoration: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), 0 8px 24px -10px color-mix(in srgb, var(--mundo-luz) 70%, transparent);
+  transition: transform var(--t-rapido) var(--curva), box-shadow var(--t-medio) var(--curva), filter var(--t-medio) var(--curva);
+}
+.boton:hover {
+  filter: brightness(1.08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 12px 30px -10px color-mix(in srgb, var(--mundo-luz) 85%, transparent);
+}
+.boton:active {
+  transform: scale(0.98);
 }
 .boton:disabled {
   opacity: 0.55;
   cursor: progress;
 }
 .boton.secundario {
-  background: var(--superficie);
+  background: var(--cristal-plano);
   color: var(--tinta);
-  border-color: var(--linea);
+  border-color: var(--cristal-linea);
+  box-shadow: var(--brillo-borde);
+}
+.boton.secundario:hover {
+  border-color: color-mix(in srgb, var(--mundo-luz) 45%, var(--cristal-linea));
+  filter: none;
 }
 .boton.peligro {
   background: transparent;
   color: var(--peligro);
-  border-color: var(--linea);
+  border-color: color-mix(in srgb, var(--peligro) 30%, transparent);
+  box-shadow: none;
 }
 .boton.ancho {
   width: 100%;
@@ -234,12 +290,21 @@ textarea {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  border: 1px solid var(--linea);
-  background: var(--superficie);
+  border: 1px solid var(--cristal-linea);
+  background: var(--cristal-plano);
   color: var(--tinta);
   cursor: pointer;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 600;
+  box-shadow: var(--brillo-borde);
+  transition: border-color var(--t-medio) var(--curva), background var(--t-medio) var(--curva), transform var(--t-rapido) var(--curva);
+}
+.boton-icono:hover {
+  border-color: color-mix(in srgb, var(--mundo-luz) 50%, var(--cristal-linea));
+  background: color-mix(in srgb, var(--mundo-luz) 10%, transparent);
+}
+.boton-icono:active {
+  transform: scale(0.95);
 }
 .boton-icono svg {
   width: 20px;
@@ -252,26 +317,31 @@ textarea {
   z-index: 15;
   right: max(var(--esp-5), calc((100vw - 720px) / 2 + var(--esp-5)));
   bottom: calc(env(safe-area-inset-bottom) + var(--esp-6));
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
-  border: 0;
-  border-radius: 18px;
-  background: var(--acento);
-  color: var(--acento-tinta);
-  box-shadow: 0 10px 30px rgb(138 180 255 / 0.3);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 20px;
+  background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--mundo-luz) 100%, white 30%), var(--mundo-luz) 45%, color-mix(in srgb, var(--mundo-luz) 70%, black));
+  color: #04060b;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--mundo-luz) 12%, transparent), 0 14px 34px -8px color-mix(in srgb, var(--mundo-luz) 75%, transparent);
   cursor: pointer;
+  transition: transform var(--t-medio) var(--curva), box-shadow var(--t-medio) var(--curva);
+}
+.boton-mas:hover {
+  transform: translateY(-2px) rotate(90deg);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--mundo-luz) 16%, transparent), 0 18px 40px -8px color-mix(in srgb, var(--mundo-luz) 85%, transparent);
+}
+.boton-mas:active {
+  transform: scale(0.94);
 }
 .boton-mas svg {
   width: 24px;
   height: 24px;
 }
 .mundo .boton-mas {
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--mundo-claro), var(--mundo-1) 55%, var(--mundo-oscuro));
-  color: #fff;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--mundo-1) 55%, transparent);
+  border-radius: 20px;
 }
 
 /* ---------- Formularios ---------- */
@@ -280,21 +350,24 @@ textarea {
   gap: var(--esp-2);
 }
 .campo label {
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--tinta-suave);
 }
 .campo input {
   min-height: 48px;
   padding: 0 var(--esp-4);
-  border: 1px solid var(--linea);
+  border: 1px solid var(--cristal-linea);
   border-radius: var(--radio-s);
-  background: var(--superficie);
+  background: rgb(4 6 11 / 0.55);
   font-size: 1rem;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  transition: border-color var(--t-medio) var(--curva), box-shadow var(--t-medio) var(--curva);
 }
 .campo input:focus-visible {
-  outline: 2px solid var(--acento);
-  outline-offset: 0;
-  border-color: transparent;
+  outline: none;
+  border-color: color-mix(in srgb, var(--cian) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cian) 18%, transparent), inset 0 1px 2px rgb(0 0 0 / 0.4);
 }
 .campo .ayuda {
   font-size: 0.8125rem;
@@ -311,10 +384,11 @@ textarea {
 
 /* ---------- Tarjetas ---------- */
 .bloque {
-  border-radius: var(--radio-m);
-  padding: var(--esp-4);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 60%), var(--superficie);
-  border: 1px solid var(--linea);
+  border-radius: var(--radio-l);
+  padding: var(--esp-4) var(--esp-5);
+  background: var(--cristal);
+  border: 1px solid var(--cristal-linea);
+  box-shadow: var(--brillo-borde), var(--sombra-capa);
 }
 .bloque + .bloque {
   margin-top: var(--esp-3);
@@ -323,12 +397,14 @@ textarea {
   margin-bottom: var(--esp-2);
 }
 .cristal {
+  position: relative;
   border-radius: var(--radio-l);
   padding: var(--esp-5);
   background: var(--cristal);
   border: 1px solid var(--cristal-linea);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--brillo-borde), var(--sombra-capa);
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
 }
 .cristal + .cristal {
   margin-top: var(--esp-3);
@@ -407,6 +483,8 @@ textarea {
 
 /* ---------- Panel ---------- */
 .panel {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
@@ -414,6 +492,36 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: var(--esp-4);
+}
+/* El Panel del móvil es el núcleo: luz azul arriba y suelo de rejilla abajo */
+.panel::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 45% at 85% -5%, rgb(77 141 255 / 0.28), transparent 70%),
+    radial-gradient(70% 35% at 0% 40%, rgb(139 123 255 / 0.12), transparent 70%),
+    var(--vacio);
+}
+.panel::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  left: -50vw;
+  right: -50vw;
+  bottom: -14vh;
+  height: 55vh;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgb(77 141 255 / 0.2) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(0deg, rgb(77 141 255 / 0.14) 0 1px, transparent 1px 64px);
+  transform: perspective(480px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
+  mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
+  opacity: 0.5;
 }
 .panel-cabecera {
   display: flex;
@@ -449,7 +557,8 @@ textarea {
   color: var(--tinta-suave);
 }
 .dato .cifra {
-  font-size: 1.75rem;
+  font-size: 2rem;
+  font-weight: 300;
 }
 .dato .nota {
   font-size: 0.75rem;
@@ -467,6 +576,14 @@ textarea {
 /* Tu despacho (móvil) */
 .despacho .datos-clave {
   margin-top: var(--esp-3);
+}
+.panel .despacho {
+  border-radius: var(--radio-xl);
+  border-color: rgb(77 141 255 / 0.3);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(77 141 255 / 0.22), transparent 55%),
+    var(--cristal);
+  box-shadow: var(--brillo-borde), var(--sombra-flotante), 0 30px 80px -40px rgb(77 141 255 / 0.55);
 }
 .nota-despacho {
   display: block;
@@ -489,14 +606,18 @@ textarea {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
 }
 .agente {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--esp-4);
   width: 100%;
   padding: var(--esp-4);
-  border-radius: var(--radio-m);
-  border: 1px solid var(--linea);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 60%), var(--superficie);
+  border-radius: var(--radio-l);
+  border: 1px solid var(--cristal-linea);
+  background:
+    radial-gradient(90% 120% at 0% 50%, color-mix(in srgb, var(--c, var(--acento)) 12%, transparent), transparent 60%),
+    var(--cristal);
+  box-shadow: var(--brillo-borde), var(--sombra-capa);
   color: var(--tinta);
   font: inherit;
   text-align: left;
@@ -504,11 +625,11 @@ textarea {
   cursor: pointer;
 }
 .agente:hover {
-  border-color: #3a4150;
+  border-color: color-mix(in srgb, var(--c, var(--acento)) 40%, var(--cristal-linea));
 }
 .agente[aria-pressed='true'] {
-  border-color: var(--acento);
-  box-shadow: 0 0 0 1px var(--acento) inset;
+  border-color: color-mix(in srgb, var(--c, var(--acento)) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c, var(--acento)) 60%, transparent) inset, 0 0 30px -8px var(--c, var(--acento));
 }
 .avatar {
   flex-shrink: 0;
@@ -517,11 +638,11 @@ textarea {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 1.25rem;
-  color: #0e0f12;
+  color: #04060b;
   background: radial-gradient(circle at 32% 28%, #fff, var(--c) 45%, color-mix(in srgb, var(--c) 40%, #000) 95%);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 35%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 14%, transparent), 0 0 24px color-mix(in srgb, var(--c) 45%, transparent);
 }
 .agente-texto {
   flex: 1;
@@ -530,8 +651,9 @@ textarea {
   gap: 2px;
 }
 .agente-nombre {
-  font-weight: 800;
+  font-weight: 600;
   font-size: 1.0625rem;
+  letter-spacing: -0.015em;
 }
 .agente-puesto {
   color: var(--tinta-suave);
@@ -683,29 +805,61 @@ textarea {
   position: relative;
   min-height: 100dvh;
   overflow: hidden;
-  background: var(--mundo-fondo);
+  isolation: isolate;
+  background:
+    radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--mundo-oscuro) 55%, transparent), transparent 60%),
+    var(--mundo-fondo);
+}
+/* Suelo de rejilla en perspectiva: da profundidad sin quitar protagonismo */
+.mundo::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  left: -50vw;
+  right: -50vw;
+  bottom: -18vh;
+  height: 70vh;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--mundo-luz) 22%, transparent) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--mundo-luz) 16%, transparent) 0 1px, transparent 1px 72px);
+  transform: perspective(520px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
+  mask-image: radial-gradient(60% 75% at 50% 100%, #000 10%, transparent 72%);
+  opacity: 0.55;
+}
+/* Línea de horizonte y viñeta superior */
+.mundo::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.35), transparent 22%);
 }
 .mundo .aurora {
   position: fixed;
+  z-index: -1;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(85px);
+  filter: blur(90px);
 }
 .mundo .aurora.a1 {
-  width: 360px;
-  height: 360px;
-  right: -140px;
-  top: -100px;
+  width: 520px;
+  height: 420px;
+  right: -180px;
+  top: -160px;
   background: var(--mundo-1);
-  opacity: 0.45;
+  opacity: 0.38;
 }
 .mundo .aurora.a2 {
-  width: 300px;
-  height: 300px;
-  left: -150px;
-  top: 380px;
+  width: 380px;
+  height: 380px;
+  left: -200px;
+  top: 46vh;
   background: var(--mundo-2);
-  opacity: 0.3;
+  opacity: 0.22;
 }
 .mundo-contenido {
   position: relative;
@@ -724,18 +878,41 @@ textarea {
 }
 .mundo-cabecera h1 {
   flex: 1;
-  font-size: 1.625rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+/* El punto de luz del departamento */
+.mundo-cabecera h1::before {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mundo-luz);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mundo-luz) 18%, transparent), 0 0 18px var(--mundo-luz);
 }
 .volver {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   border: 1px solid var(--cristal-linea);
-  background: var(--cristal);
+  background: var(--cristal-plano);
   color: var(--tinta);
   text-decoration: none;
+  box-shadow: var(--brillo-borde);
+  transition: border-color var(--t-medio) var(--curva), transform var(--t-rapido) var(--curva);
+}
+.volver:hover {
+  border-color: color-mix(in srgb, var(--mundo-luz) 50%, var(--cristal-linea));
+}
+.volver:active {
+  transform: scale(0.95);
 }
 .volver svg {
   width: 20px;
@@ -905,11 +1082,12 @@ textarea {
 .pestanas {
   display: flex;
   gap: 4px;
-  padding: 4px;
+  padding: 5px;
   margin-bottom: var(--esp-4);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--cristal);
   border: 1px solid var(--cristal-linea);
+  box-shadow: var(--brillo-borde);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -935,9 +1113,10 @@ textarea {
   cursor: pointer;
 }
 .pestanas :is(button[aria-selected='true'], a[aria-current='page']) {
-  background: color-mix(in srgb, var(--mundo-1) 32%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mundo-luz) 26%, transparent), color-mix(in srgb, var(--mundo-luz) 12%, transparent));
   color: var(--tinta);
-  font-weight: 700;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 0 0 1px color-mix(in srgb, var(--mundo-luz) 30%, transparent);
 }
 .selector-mes {
   display: flex;
@@ -2324,23 +2503,52 @@ button.an-fila { cursor: pointer; }
     gap: var(--esp-5);
     align-items: start;
   }
+  /* Rail lateral: sin caja; la sección activa se enciende con la luz del departamento */
   #contenido > .pestanas {
     margin-bottom: 0;
     position: sticky;
     top: var(--esp-5);
     flex-direction: column;
     gap: 2px;
-    padding: var(--esp-2);
-    border-radius: var(--radio-l);
+    padding: var(--esp-2) 0 var(--esp-2) var(--esp-2);
+    border-radius: 0;
+    border: 0;
+    border-left: 1px solid var(--cristal-linea);
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     overflow: visible;
   }
   #contenido > .pestanas :is(button, a) {
+    position: relative;
     flex: none;
     justify-content: flex-start;
     min-height: 44px;
     padding: 0 var(--esp-4);
     text-align: left;
     font-size: 0.9375rem;
+    border-radius: 12px;
+    transition: background var(--t-medio) var(--curva), color var(--t-medio) var(--curva);
+  }
+  #contenido > .pestanas :is(button, a):hover {
+    background: rgb(160 185 255 / 0.05);
+    color: var(--tinta);
+  }
+  #contenido > .pestanas :is(button[aria-selected='true'], a[aria-current='page']) {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--mundo-luz) 18%, transparent), transparent 85%);
+    box-shadow: none;
+  }
+  #contenido > .pestanas :is(button[aria-selected='true'], a[aria-current='page'])::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--esp-2) - 1px);
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--mundo-luz);
+    box-shadow: 0 0 12px var(--mundo-luz);
   }
   /* Cada pestaña, en dos columnas */
   #panel-finanzas {
@@ -2368,8 +2576,19 @@ button.an-fila { cursor: pointer; }
   #panel-finanzas[data-vista='sobrante'] { grid-auto-flow: dense; }
   /* Inicio: la rejilla ya va en columnas; aquí, tres en pantallas grandes */
   #panel-finanzas[data-vista='inicio'] .heroe-inicio { padding: var(--esp-6); }
-  #panel-finanzas[data-vista='inicio'] .heroe-inicio .heroe-cifra { font-size: 4rem; }
+  #panel-finanzas[data-vista='inicio'] .heroe-inicio .heroe-cifra { font-size: 4.75rem; }
   #panel-finanzas[data-vista='inicio'] .anillo-grande { width: 150px; height: 150px; }
+  /* Inicio: composición asimétrica en 12 columnas (el disponible manda; patrimonio a su lado) */
+  #panel-finanzas[data-vista='inicio'] { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: row dense; }
+  #panel-finanzas[data-vista='inicio'] .rejilla-inicio { display: contents; }
+  #panel-finanzas[data-vista='inicio'] > .heroe-inicio { grid-column: 1 / 9; align-self: stretch; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-patrimonio'] { grid-column: 9 / 13; align-self: stretch; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-sobres-inicio'] { grid-column: 1 / 6; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-ultimos'] { grid-column: 6 / 13; }
+  #panel-finanzas[data-vista='inicio'] .tarjeta-ancha { grid-column: 1 / -1; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-obj-inicio'] { grid-column: 1 / 5; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-avisos'] { grid-column: 5 / 9; }
+  #panel-finanzas[data-vista='inicio'] [aria-labelledby='t-fondo-inicio'] { grid-column: span 4; }
   /* Ajustes: apartados en dos columnas */
   /* Ajustes: dos columnas independientes (al desplegar uno no se estira el de al lado) */
   #panel-finanzas[data-vista='ajustes'] { display: block; columns: 2; column-gap: var(--esp-4); }
@@ -2378,10 +2597,6 @@ button.an-fila { cursor: pointer; }
   /* Mes, Sobrante y Ahorro centran la cabecera del mes en toda la anchura */
   #panel-finanzas .selector-mes { max-width: 420px; justify-self: center; width: 100%; }
   #panel-finanzas .anillos { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-}
-@media (min-width: 1360px) {
-  #panel-finanzas[data-vista='inicio'] .rejilla-inicio { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  #panel-finanzas[data-vista='inicio'] .rejilla-inicio .tarjeta-ancha { grid-column: 1 / -1; }
 }
 
 /* ---------- Barra de pestañas de Finanzas abajo, como Sobrea (móvil y tableta) ---------- */
@@ -3197,7 +3412,7 @@ button.an-fila { cursor: pointer; }
 .nota-texto a { color: var(--mundo-acento); }
 .nota-pie { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-2); }
 .nota-pie:empty { display: none; }
-.etiqueta { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgb(255 255 255 / 0.07); font-size: 0.8125rem; color: var(--tinta-suave); }
+.nota-pie .etiqueta { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgb(255 255 255 / 0.07); font-size: 0.8125rem; color: var(--tinta-suave); }
 .nota-area { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 0.8125rem; color: var(--tinta-suave); }
 .nota-fechas { font-size: 0.8125rem; }
 
@@ -3252,3 +3467,78 @@ button.an-fila { cursor: pointer; }
 .exportar-notas { display: grid; gap: 2px; justify-items: start; margin: var(--esp-2) 0 var(--esp-5); padding-top: var(--esp-4); border-top: 1px solid rgb(255 255 255 / 0.08); }
 .exportar-notas .enlace { min-height: 40px; }
 .exportar-notas .suave { font-size: 0.8125rem; }
+
+/* =====================================================================
+   Órbita · capas destacadas, respuesta al cursor y entrada orquestada
+   ===================================================================== */
+
+/* Paneles protagonistas: la luz del departamento entra por una esquina */
+.heroe-inicio,
+.heroe-mes,
+.proyecto-ficha,
+.nivel-general {
+  border-radius: var(--radio-xl);
+  border-color: color-mix(in srgb, var(--mundo-luz) 26%, var(--cristal-linea));
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--mundo-luz) 22%, transparent), transparent 55%),
+    radial-gradient(80% 90% at 0% 100%, color-mix(in srgb, var(--mundo-2) 18%, transparent), transparent 60%),
+    var(--cristal);
+  box-shadow: var(--brillo-borde), var(--sombra-flotante), 0 30px 80px -40px color-mix(in srgb, var(--mundo-luz) 55%, transparent);
+}
+.heroe-inicio .heroe-cifra,
+.heroe-mes .cifra {
+  text-shadow: 0 0 40px color-mix(in srgb, var(--mundo-luz) 35%, transparent);
+}
+
+/* Lo que se toca responde: se eleva un poco y su borde toma luz */
+a.cristal,
+.nota-tarjeta,
+.proyecto-tarjeta,
+.agente,
+.habito-mini,
+.grupo-notas summary {
+  transition: transform var(--t-medio) var(--curva), border-color var(--t-medio) var(--curva), box-shadow var(--t-medio) var(--curva), background var(--t-medio) var(--curva);
+}
+@media (hover: hover) {
+  a.cristal:hover,
+  .nota-tarjeta:hover,
+  .proyecto-tarjeta:hover,
+  .agente:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--mundo-luz) 40%, var(--cristal-linea));
+    box-shadow: var(--brillo-borde), var(--sombra-flotante);
+  }
+}
+
+/* Casillas: al marcarlas, un destello breve */
+.casilla[aria-checked='true'] svg {
+  animation: marcar var(--t-lento) var(--curva);
+}
+@keyframes marcar {
+  0% { transform: scale(0.6); filter: drop-shadow(0 0 0 transparent); }
+  55% { transform: scale(1.15); filter: drop-shadow(0 0 8px var(--mundo-luz)); }
+  100% { transform: scale(1); }
+}
+
+/* Entrada orquestada: solo al abrir un departamento, no en cada repintado */
+@media (prefers-reduced-motion: no-preference) {
+  .mundo.recien .mundo-cabecera,
+  .mundo.recien #contenido > .pestanas,
+  .mundo.recien [id^='panel-'] > *,
+  .mundo.recien [id^='panel-'] > .rejilla-inicio > * {
+    animation: aparecer var(--t-lento) var(--curva) both;
+  }
+  .mundo.recien #contenido > .pestanas { animation-delay: 60ms; }
+  .mundo.recien [id^='panel-'] > :nth-child(1) { animation-delay: 90ms; }
+  .mundo.recien [id^='panel-'] > :nth-child(2) { animation-delay: 140ms; }
+  .mundo.recien [id^='panel-'] > :nth-child(3) { animation-delay: 190ms; }
+  .mundo.recien [id^='panel-'] > :nth-child(4) { animation-delay: 240ms; }
+  .mundo.recien [id^='panel-'] > :nth-child(n + 5) { animation-delay: 290ms; }
+  .mundo.recien [id^='panel-'] > .rejilla-inicio > :nth-child(1) { animation-delay: 200ms; }
+  .mundo.recien [id^='panel-'] > .rejilla-inicio > :nth-child(2) { animation-delay: 250ms; }
+  .mundo.recien [id^='panel-'] > .rejilla-inicio > :nth-child(n + 3) { animation-delay: 300ms; }
+}
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}

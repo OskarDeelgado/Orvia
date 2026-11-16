@@ -16,7 +16,7 @@ export default {
   agente: {
     nombre: 'Jude',
     puesto: 'Bibliotecario',
-    color: '#fbbf24',
+    color: '#f2b33d',
     tarea: 'Guarda lo que piensas y lo que sabes: ideas, aprendizajes y todo sobre ti.',
     situacion: 'Tu biblioteca está abierta',
   },
