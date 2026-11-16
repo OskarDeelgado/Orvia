@@ -311,6 +311,11 @@ function pintarMundo({ id, titulo }) {
     const mundo = raiz.querySelector('.mundo');
     mundo.style.setProperty('--origen-x', origenZoom.x + 'px');
     mundo.style.setProperty('--origen-y', origenZoom.y + 'px');
+    // Al acabar el zoom se quita la clase: si no, su «transform» se queda puesto y la barra
+    // inferior y el + dejan de flotar (se colocan al final de la página en vez de la pantalla).
+    const soltar = () => mundo.classList.remove('entrar');
+    mundo.addEventListener('animationend', (e) => { if (e.target === mundo) soltar(); });
+    setTimeout(soltar, 900);
   }
   origenZoom = null;
   return raiz.querySelector('#contenido');
