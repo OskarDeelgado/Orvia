@@ -12,14 +12,16 @@ const PRIORIDADES = [[1, 'Alta'], [2, 'Normal'], [3, 'Baja']];
  * @param {object} [o.tarea]  la tarea a editar (si no, se crea una)
  * @param {string|null} [o.fecha]  día propuesto para una tarea nueva (null = sin fecha)
  * @param {string|null} [o.proyecto]  proyecto propuesto para una tarea nueva
+ * @param {{titulo?: string, notas?: string, area_id?: string}} [o.inicial]  texto propuesto para una tarea nueva
+ * @param {(tarea: object) => any} [o.alCrear]  se llama con la tarea recién creada
  */
-export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null } = {}) {
+export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null, inicial = null, alCrear = null } = {}) {
   const [areas, proyectos] = await Promise.all([listarAreas().catch(() => []), proyectosParaElegir().catch(() => [])]);
   const editando = !!tarea;
   const estado = {
     fecha: editando ? tarea.fecha : fecha === undefined ? (proyecto ? null : hoy()) : fecha,
     prioridad: editando ? tarea.prioridad : 2,
-    area: editando ? tarea.area_id : null,
+    area: editando ? tarea.area_id : inicial?.area_id || null,
     proyecto: editando ? tarea.proyecto_id : proyecto,
     hito: editando ? tarea.hito_id : null,
   };
@@ -31,7 +33,7 @@ export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null } = 
     <form class="hoja-form" id="form-tarea" novalidate>
       <div class="campo">
         <label for="tarea-titulo">Qué tienes que hacer</label>
-        <input id="tarea-titulo" maxlength="300" autocomplete="off" placeholder="Llamar al banco" value="${escapar(tarea?.titulo || '')}">
+        <input id="tarea-titulo" maxlength="300" autocomplete="off" placeholder="Llamar al banco" value="${escapar(tarea?.titulo || inicial?.titulo || '')}">
       </div>
       <div class="campo">
         <span class="etiqueta-campo" id="et-dia">Día</span>
@@ -62,7 +64,7 @@ export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null } = 
       </div>` : ''}
       <div class="campo">
         <label for="tarea-notas">Notas (opcional)</label>
-        <textarea id="tarea-notas" rows="2" maxlength="2000">${escapar(tarea?.notas || '')}</textarea>
+        <textarea id="tarea-notas" rows="2" maxlength="2000">${escapar(tarea?.notas || inicial?.notas || '')}</textarea>
       </div>
       <button class="boton ancho" type="submit" id="tarea-guardar">${editando ? 'Guardar cambios' : 'Añadir tarea'}</button>
       ${editando ? '<button class="boton peligro ancho" type="button" id="tarea-eliminar">Eliminar tarea</button>' : ''}
@@ -135,7 +137,10 @@ export async function abrirHojaTarea({ tarea = null, fecha, proyecto = null } = 
     boton.disabled = true;
     try {
       if (editando) await guardarTarea(tarea.id, datos);
-      else await crearTarea(datos);
+      else {
+        const nueva = await crearTarea(datos);
+        if (alCrear) await alCrear(nueva);
+      }
       aviso(editando ? 'Cambios guardados' : datos.fecha ? `Tarea añadida: ${etiquetaDia(datos.fecha).toLowerCase()}` : datos.proyecto_id ? 'Tarea añadida al proyecto' : 'Tarea añadida a «Sin fecha»');
       cerrar('guardado');
       avisarCambio();

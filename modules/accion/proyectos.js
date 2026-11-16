@@ -104,6 +104,23 @@ export async function montarProyectos(contenedor, id = null) {
     if (d.nuevoProyecto != null) return abrirHojaProyecto({ datos });
     if (d.editarProyecto != null) return abrirHojaProyecto({ proyecto: proyecto(), datos });
     if (d.editarHito) return abrirHojaHito(buscarHito(d.editarHito));
+    if (d.nuevoAprendizaje) {
+      const { abrirHojaNota } = await import('../cerebro/hoja.js');
+      return abrirHojaNota({ tipo: 'aprendizaje', grupo: d.nuevoAprendizaje });
+    }
+    if (d.crearGrupo != null) {
+      const p = proyecto();
+      b.disabled = true;
+      try {
+        const [{ crearGrupo }, { abrirHojaNota }] = await Promise.all([import('../cerebro/datos.js'), import('../cerebro/hoja.js')]);
+        const grupo = await crearGrupo({ nombre: p.titulo.slice(0, 120), tipo: 'curso', proyecto_id: p.id });
+        avisarCambio();
+        return abrirHojaNota({ tipo: 'aprendizaje', grupo: grupo.id });
+      } catch (err) {
+        b.disabled = false;
+        return aviso(err.message, { error: true });
+      }
+    }
     if (d.tarea) {
       const t = buscarTarea(d.tarea);
       if (t) abrirHojaTarea({ tarea: t });
@@ -180,10 +197,11 @@ export async function montarProyectos(contenedor, id = null) {
   });
 
   const alCambiar = () => {
-    if (!contenedor.isConnected) return removeEventListener('orvia:accion', alCambiar);
+    if (!contenedor.isConnected) { removeEventListener('orvia:accion', alCambiar); removeEventListener('orvia:cerebro', alCambiar); return; }
     cargar();
   };
   addEventListener('orvia:accion', alCambiar);
+  addEventListener('orvia:cerebro', alCambiar);
 }
 
 // ---------- Lista ----------
@@ -274,6 +292,7 @@ function pintarFicha(contenedor, datos, r) {
       ${todoHecho && !terminado ? '<button class="boton ancho" type="button" data-estado-proyecto="terminado">Dar el proyecto por terminado</button>' : ''}
       ${terminado ? '<button class="boton secundario ancho" type="button" data-estado-proyecto="activo">Volver a ponerlo en marcha</button>' : ''}
     </section>
+    ${bloqueAprendizajes(datos, p)}
 
     <div class="hitos">
       ${r.porHito.map((x, i) => bloqueHito(x, i)).join('')}
@@ -290,6 +309,29 @@ function pintarFicha(contenedor, datos, r) {
       <span aria-hidden="true">+</span>
       <input type="text" maxlength="200" placeholder="Añadir hito" aria-label="Nuevo hito" enterkeyhint="done">
     </form>`;
+}
+
+// Lo aprendido en este proyecto: las notas del grupo de aprendizajes enlazado (Segundo cerebro).
+function bloqueAprendizajes(datos, p) {
+  const grupos = (datos.grupos || []).filter((g) => g.proyecto_id === p.id);
+  if (!grupos.length) {
+    return p.tipo === 'formacion'
+      ? `<section class="cristal aprendido vacio">
+          <div><h3>Lo que vas aprendiendo</h3><p class="suave">Apunta aquí lo que saques de esta formación. Se guarda en tu Segundo cerebro, en un grupo con el nombre del proyecto.</p></div>
+          <button class="boton secundario boton-pequeno" type="button" data-crear-grupo>Empezar a apuntar</button>
+        </section>` : '';
+  }
+  const ids = new Set(grupos.map((g) => g.id));
+  const notas = (datos.aprendizajes || []).filter((n) => ids.has(n.grupo_id));
+  return `
+    <section class="cristal aprendido" aria-labelledby="t-aprendido">
+      <div class="titulo-con-enlace">
+        <h3 id="t-aprendido">Lo que has aprendido <span class="suave">${notas.length}</span></h3>
+        <button class="enlace" type="button" data-nuevo-aprendizaje="${grupos[0].id}">+ Apuntar</button>
+      </div>
+      ${notas.length ? `<div class="aprendido-lista">${notas.slice(0, 6).map((n) => `<a class="fila-nota" href="#/cerebro/nota/${n.id}"><span class="fila-nota-titulo">${escapar(n.titulo)}</span>${n.etiquetas?.length ? `<span class="suave">${n.etiquetas.slice(0, 3).map((e) => `#${escapar(e)}`).join(' · ')}</span>` : ''}</a>`).join('')}</div>` : '<p class="suave">Todavía no has apuntado nada de este proyecto.</p>'}
+      ${notas.length > 6 ? `<a class="enlace" href="#/cerebro/aprendizajes">Ver los ${notas.length} en tu Segundo cerebro</a>` : ''}
+    </section>`;
 }
 
 function bloqueHito(x, i) {

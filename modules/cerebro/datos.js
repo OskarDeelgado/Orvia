@@ -1,6 +1,6 @@
 // Datos del Segundo cerebro: notas (tabla del núcleo + supabase/007_cerebro.sql) y grupos de aprendizajes.
 
-import { listar, crear, actualizar, archivar } from '../../core/db.js';
+import { listar, crear, actualizar, archivar, obtener } from '../../core/db.js';
 import { listarAreas } from '../../core/areas.js';
 import { hoy, sumarDias, fechaCorta } from '../accion/fechas.js';
 
@@ -79,6 +79,14 @@ export function hace(marca) {
   if (dia === sumarDias(h, -1)) return 'ayer';
   for (let n = 2; n < 7; n++) if (dia === sumarDias(h, -n)) return `hace ${n} días`;
   return fechaCorta(dia);
+}
+
+// Tareas nacidas de una nota: se enlazan en la tabla común `enlaces` (nota → tarea).
+export const enlazarTarea = (notaId, tareaId) => crear('enlaces', { origen_tipo: 'nota', origen_id: notaId, destino_tipo: 'tarea', destino_id: tareaId });
+export async function tareasDeNota(notaId) {
+  const enlaces = await listar('enlaces', { filtros: { origen_tipo: 'nota', origen_id: notaId, destino_tipo: 'tarea' } });
+  const tareas = await Promise.all(enlaces.map((e) => obtener('tareas', e.destino_id).catch(() => null)));
+  return tareas.filter((t) => t && !t.archivado && t.estado !== 'cancelada');
 }
 
 export const avisarCerebro = () => dispatchEvent(new CustomEvent('orvia:cerebro'));

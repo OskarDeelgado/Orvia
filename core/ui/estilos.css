@@ -3213,3 +3213,17 @@ button.an-fila { cursor: pointer; }
 .nota-convertir .suave { font-size: 0.8125rem; text-align: center; }
 .boton-convertir { background: linear-gradient(145deg, #16a34a, #0d9488); color: #f2f4f7; }
 .proyecto-origen { display: block; padding: 10px 12px; border-radius: 12px; background: rgb(252 211 77 / 0.1); color: #fde68a; font-size: 0.8125rem; font-weight: 600; text-decoration: none; }
+
+/* Segundo cerebro (bloque 3): aprendizajes en el proyecto y tareas desde una nota */
+.aprendido { display: grid; gap: var(--esp-2); padding: var(--esp-4); margin: 0 0 var(--esp-4); border-color: rgb(94 234 212 / 0.25); }
+.aprendido h3 { font-size: 1.0625rem; color: #5eead4; }
+.aprendido h3 .suave { font-weight: 500; }
+.aprendido.vacio { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--esp-3); }
+.aprendido.vacio > div { flex: 1 1 240px; display: grid; gap: 4px; }
+.aprendido.vacio p { font-size: 0.875rem; }
+.aprendido-lista { display: grid; }
+@media (min-width: 1024px) { .aprendido-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--esp-5); } }
+.nota-tareas { display: grid; gap: var(--esp-1); padding: var(--esp-4); border-radius: var(--radio-l, 20px); border: 1px solid var(--cristal-linea); background: var(--cristal); }
+.nota-tareas h3 { font-size: 0.9375rem; color: var(--tinta-suave); }
+.nota-tareas p { font-size: 0.875rem; }
+.tarea-de-nota.hecha .fila-nota-titulo { text-decoration: line-through; color: var(--tinta-suave); }

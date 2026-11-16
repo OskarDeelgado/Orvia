@@ -2,7 +2,8 @@
 // con un toque. Para cambiar el texto, «Editar» abre el panel de la nota.
 
 import { escapar, aviso } from '../../core/ui/componentes.js';
-import { TIPOS, ESTADOS, SECCIONES, nombreDe, cambiarNota, avisarCerebro, hace } from './datos.js';
+import { TIPOS, ESTADOS, SECCIONES, nombreDe, cambiarNota, avisarCerebro, hace, tareasDeNota, enlazarTarea } from './datos.js';
+import { fechaCorta, hoy } from '../accion/fechas.js';
 import { pintarTexto } from './formato.js';
 import { abrirHojaNota } from './hoja.js';
 
@@ -43,8 +44,31 @@ export function pintarNota(contenedor, n, datos) {
           <button class="boton ancho boton-convertir" type="button" data-convertir>Convertir en proyecto</button>
           <p class="suave">Se crea en Acción con este texto como descripción. La idea queda como «Lanzada» y enlazada al proyecto.</p>
         </div>` : ''}
+      <section class="nota-tareas" aria-labelledby="t-nota-tareas">
+        <div class="titulo-con-enlace">
+          <h3 id="t-nota-tareas">Tareas de esta nota</h3>
+          <button class="enlace" type="button" data-crear-tarea>+ Crear tarea</button>
+        </div>
+        <div id="nota-tareas-lista"></div>
+      </section>
       <p class="suave nota-fechas">Creada ${hace(n.creado)}${n.modificado && String(n.modificado).slice(0, 16) !== String(n.creado).slice(0, 16) ? ` · cambiada ${hace(n.modificado)}` : ''}</p>
     </article>`;
+  pintarTareas(contenedor, n.id);
+}
+
+// Las tareas llegan después que la nota, para no retrasar la lectura.
+async function pintarTareas(contenedor, notaId) {
+  const caja = contenedor.querySelector('#nota-tareas-lista');
+  if (!caja) return;
+  let tareas = [];
+  try { tareas = await tareasDeNota(notaId); } catch { /* sin enlaces: se queda vacío */ }
+  if (!caja.isConnected) return;
+  const h = hoy();
+  caja.innerHTML = tareas.length ? tareas.map((t) => `
+    <a class="fila-nota tarea-de-nota${t.estado === 'hecha' ? ' hecha' : ''}" href="${t.proyecto_id ? `#/accion/proyectos/${t.proyecto_id}` : '#/accion'}">
+      <span class="fila-nota-titulo">${escapar(t.titulo)}</span>
+      <span class="suave">${t.estado === 'hecha' ? 'Hecha ✓' : t.fecha ? (t.fecha === h ? 'Para hoy' : `${t.fecha < h ? 'Era para el' : 'Para el'} ${fechaCorta(t.fecha)}`) : 'Sin fecha'}</span>
+    </a>`).join('') : '<p class="suave">¿Esta nota pide hacer algo? Crea la tarea y aparecerá en Acción.</p>';
 }
 
 /** Clics dentro de una nota abierta. Devuelve true si lo ha atendido. */
@@ -55,6 +79,17 @@ export async function alClicNota(e, datos, id) {
   const d = b.dataset;
   try {
     if (d.editarNota != null) { abrirHojaNota({ nota: n }); return true; }
+    if (d.crearTarea != null) {
+      const { abrirHojaTarea } = await import('../accion/hoja.js');
+      // Si la nota ya tiene proyecto (una idea lanzada, o un aprendizaje de un curso), se propone.
+      const proyecto = datos.porProyecto[n.proyecto_id]?.id || datos.porProyecto[datos.porGrupo[n.grupo_id]?.proyecto_id]?.id || null;
+      abrirHojaTarea({
+        proyecto,
+        inicial: { notas: `De tu nota «${n.titulo}»`, area_id: n.area_id },
+        alCrear: async (tarea) => { await enlazarTarea(n.id, tarea.id); avisarCerebro(); },
+      });
+      return true;
+    }
     if (d.convertir != null) {
       const { abrirHojaProyecto } = await import('../accion/proyectos.js');
       abrirHojaProyecto({
