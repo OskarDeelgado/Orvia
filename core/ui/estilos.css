@@ -2411,6 +2411,7 @@ button.an-fila { cursor: pointer; }
   position: fixed;
   inset: 0;
   max-width: none;
+  width: auto;
   padding: 0;
   display: block;
 }
@@ -3613,3 +3614,80 @@ a.cristal,
 .lista-hechos { margin-top: var(--esp-3); padding-top: var(--esp-3); border-top: 1px solid var(--cristal-linea); }
 .lista-hechos .grupo-titulo { margin: 0; }
 .lista-ficha .tarea-texto { min-height: 44px; }
+
+/* ---------- Panel: resumen (móvil y ordenador) ---------- */
+.panel-acciones { display: inline-flex; align-items: center; gap: var(--esp-2); }
+.boton-oficina { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.boton-oficina svg { width: 18px; height: 18px; }
+.panel-rejilla { display: flex; flex-direction: column; gap: var(--esp-3); }
+.panel-col { display: contents; }
+.panel-rejilla .bloque + .bloque, .panel-rejilla .tu-dia { margin-top: 0; }
+.panel-rejilla #p-finanzas { order: -1; }
+.panel-rejilla [hidden] { display: none; }
+.panel-tarjeta { display: grid; gap: var(--esp-3); align-content: start; }
+.panel-tarjeta > * { margin: 0; }
+.panel-tarjeta .titulo-con-enlace h2 { margin: 0; font-size: 1.0625rem; }
+.panel-subtitulo { font-size: 0.8125rem; font-weight: 600; color: var(--tinta-suave); margin: var(--esp-1) 0 0; }
+
+/* Finanzas */
+.fin-heroe { display: grid; gap: var(--esp-2); color: inherit; text-decoration: none; }
+.fin-heroe .etiqueta { font-size: 0.8125rem; color: var(--tinta-suave); }
+.fin-queda { font-size: clamp(2.25rem, 4vw, 2.875rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.fin-queda.negativa { color: var(--peligro); }
+.fin-heroe .barra-mes { display: block; height: 8px; margin: var(--esp-1) 0; }
+.fin-estado { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--esp-3); font-size: 0.875rem; }
+.fin-heroe.estado-bien .fin-estado strong { color: var(--exito); }
+.fin-heroe.estado-atencion .fin-estado strong { color: var(--alerta); }
+.fin-heroe.estado-mal .fin-estado strong { color: var(--peligro); }
+.fin-sobres { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--esp-2); }
+.fin-sobres li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px var(--esp-3); font-size: 0.875rem; }
+.fin-sobre-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-sobre-cifra { color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+.fin-sobres li.justo .fin-sobre-cifra { color: var(--alerta); }
+.fin-sobres li.pasado .fin-sobre-cifra { color: var(--peligro); }
+.fin-sobre-barra { grid-column: 1 / -1; height: 4px; border-radius: 999px; background: rgb(255 255 255 / 0.07); overflow: hidden; }
+.fin-sobre-barra i { display: block; height: 100%; border-radius: inherit; background: var(--mundo-claro); opacity: 0.75; }
+.fin-sobres li.justo .fin-sobre-barra i { background: var(--alerta); opacity: 1; }
+.fin-sobres li.pasado .fin-sobre-barra i { background: var(--peligro); opacity: 1; }
+.fin-patrimonio { display: flex; justify-content: space-between; align-items: baseline; padding-top: var(--esp-3); border-top: 1px solid var(--cristal-linea); color: inherit; text-decoration: none; font-size: 0.9375rem; }
+.fin-patrimonio strong { font-size: 1.125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Proyectos y listas: filas que llevan a cada uno */
+.panel-filas { list-style: none; margin: 0; padding: 0; display: grid; }
+.panel-filas li + li { border-top: 1px solid var(--cristal-linea); }
+.panel-fila { display: flex; align-items: center; gap: var(--esp-3); min-height: 56px; padding: var(--esp-2) 0; color: inherit; text-decoration: none; border-radius: var(--radio-s); transition: background var(--t-rapido) var(--curva); }
+@media (hover: hover) { .panel-fila:hover { background: rgb(255 255 255 / 0.035); } }
+.panel-fila:focus-visible { outline: 2px solid var(--mundo-acento); outline-offset: 2px; }
+.panel-fila-texto { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.panel-fila-texto strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-fila-texto .suave { font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-progreso {
+  flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--mundo-1) calc(var(--p) * 1%), rgb(255 255 255 / 0.08) 0);
+}
+.panel-progreso span { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #0d1626; font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.panel-cuenta { flex: none; min-width: 32px; height: 32px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; font-weight: 700; font-size: 0.875rem; color: var(--mundo-claro); background: color-mix(in srgb, var(--mundo-1) 22%, transparent); }
+
+/* Ordenador: dos columnas; Tu día y proyectos a la izquierda, finanzas y listas a la derecha */
+.panel.panel-ancho {
+  /* Ocupa todo el ancho (el cielo y la ciudad también); el contenido se centra en 1240 px */
+  max-width: none;
+  width: auto;
+  padding-left: max(var(--esp-6), calc((100% - 1240px) / 2));
+  padding-right: max(var(--esp-6), calc((100% - 1240px) / 2));
+  padding-bottom: 120px;
+}
+.panel-ancho ~ .boton-mas { right: max(var(--esp-5), calc((100vw - 1240px) / 2 - 80px)); }
+/* Las tarjetas del Panel tapan la ciudad lo justo para leerse siempre */
+.panel .bloque, .panel .agente { backdrop-filter: blur(20px) saturate(1.2); -webkit-backdrop-filter: blur(20px) saturate(1.2); background-color: rgb(9 14 30 / 0.55); }
+.panel-ancho .panel-rejilla { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--esp-4); align-items: start; }
+.panel-ancho .panel-col { display: flex; flex-direction: column; gap: var(--esp-4); }
+.panel-ancho .tu-dia { padding: var(--esp-5) var(--esp-6); }
+.panel-ancho .tu-dia .habitos-mini { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.panel-ancho .panel-saludo h1 { font-size: clamp(2rem, 3vw, 2.5rem); }
+.panel-ancho .equipo-fila .agente { padding: var(--esp-3) var(--esp-4); }
+.panel-ancho .equipo-fila .avatar { width: 42px; height: 42px; font-size: 1.0625rem; }
+/* La entrada (un leve zoom) no debe sacar la barra de desplazamiento horizontal */
+html:has(.panel-ancho), body:has(.panel-ancho) { overflow-x: clip; }
+.panel-tarjeta .titulo-con-enlace { align-items: center; }
+.panel > .boton.secundario.ancho { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); background-color: rgb(9 14 30 / 0.6); }

@@ -1,7 +1,10 @@
-// Panel: el centro de Orvia.
-// - En el ordenador: la oficina 3D, con las fichas del equipo debajo.
-// - En el móvil: un panel ligero con tu despacho (datos clave) y la ficha de cada
-//   agente; la oficina 3D se abre solo si la pides (#/oficina).
+// Panel: el centro de Orvia. Un resumen que te dice cómo vas y te lleva a cada sitio.
+// - Tu día (tareas, eventos y hábitos de hoy, que se marcan aquí mismo).
+// - Finanzas: lo que te queda este mes, patrimonio y los sobres más justos.
+// - Proyectos en marcha con su siguiente paso y lo que queda en tus listas.
+// - Tu equipo: la ficha de cada departamento.
+// En el ordenador se reparte en dos columnas; en el móvil, una debajo de otra.
+// La oficina 3D se abre solo si la pides (#/oficina).
 // Solo lee; no guarda datos propios.
 
 import { escapar, marcaOrvia, ICONOS } from './ui/componentes.js';
@@ -51,7 +54,7 @@ async function leerFinanzas() {
     const k = motor.kInicial();
     const r = motor.resumenMes(k);
     const mes = nombreMes(r.mes, { anio: false });
-    return { queda: euros(r.queda), patrimonio: euros(motor.patrimonio(k).total), mes, etiquetaQueda: `Te quedan en ${mes}`, hayFinanzas: true };
+    return { queda: euros(r.queda), patrimonio: euros(motor.patrimonio(k).total), mes, etiquetaQueda: `Te quedan en ${mes}`, hayFinanzas: true, resumen: r, euros };
   } catch {
     return {};
   }
@@ -121,43 +124,150 @@ function fichaAgente(m, { comoEnlace }) {
     : `<button class="agente" type="button" data-sala="${m.id}" style="--c:${a.color}" aria-pressed="false">${contenido}</button>`;
 }
 
-/** Panel ligero del móvil. */
-function pintarPanelMovil(raiz, { nombre }) {
-  const d = SIN_DATOS;
+// ---------- Tarjetas del Panel ----------
+
+const ICONO_OFICINA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>';
+
+/** Finanzas: la cifra que más miras, cómo vas de ritmo y los sobres a vigilar. */
+function htmlFinanzas(datos) {
+  const r = datos.resumen;
+  if (!r) {
+    return `
+      <div class="titulo-con-enlace"><h2 id="t-despacho">Finanzas</h2><a class="enlace" href="#/finanzas">Abrir</a></div>
+      <p class="suave">${datos.hayFinanzas === false ? 'Las cifras aparecerán cuando pongas en marcha Finanzas.' : 'Cargando…'}</p>`;
+  }
+  const euros = datos.euros;
+  const pct = Math.round(r.fraccionGastada * 100);
+  const estado = r.estado.texto.startsWith('Vas más rápido') ? 'Vas más rápido que el mes' : r.estado.tipo === 'bien' ? 'Vas bien' : r.estado.texto;
+  const justos = r.sobres
+    .filter((x) => x.sobre.tipo === 'gasto' && x.presupuesto > 0)
+    .map((x) => ({ ...x, queda: x.presupuesto - x.gastado, uso: x.gastado / x.presupuesto }))
+    .sort((a, b) => b.uso - a.uso)
+    .slice(0, 3);
+  return `
+    <div class="titulo-con-enlace"><h2 id="t-despacho">Finanzas</h2><a class="enlace" href="#/finanzas">Abrir</a></div>
+    <a class="fin-heroe estado-${r.estado.tipo}" href="#/finanzas">
+      <span class="etiqueta">${escapar(datos.etiquetaQueda)}</span>
+      <span class="cifra fin-queda${r.queda < -0.004 ? ' negativa' : ''}">${escapar(datos.queda)}</span>
+      <span class="barra-mes" role="img" aria-label="${pct} % del presupuesto gastado"><span class="relleno" style="width:${Math.min(100, pct)}%"></span>${r.avanceMes != null ? `<span class="marca-dia" style="left:${(r.avanceMes * 100).toFixed(1)}%"></span>` : ''}</span>
+      <span class="fin-estado"><strong>${escapar(estado)}</strong><span class="suave">${pct} % gastado${r.esActual ? ` · día ${r.dia} de ${r.diasMes}` : ''}</span></span>
+    </a>
+    ${justos.length ? `
+      <h3 class="panel-subtitulo">Sobres más justos</h3>
+      <ul class="fin-sobres">${justos.map((x) => `
+        <li class="${x.queda < -0.004 ? 'pasado' : x.uso >= 0.8 ? 'justo' : ''}">
+          <span class="fin-sobre-nombre"><span class="punto" style="--c:${escapar(x.sobre.color || '#6b7280')}"></span>${escapar(x.sobre.nombre)}</span>
+          <span class="fin-sobre-cifra">${x.queda < -0.004 ? `Pasado ${euros(-x.queda)}` : `Quedan ${euros(x.queda)}`}</span>
+          <span class="fin-sobre-barra" aria-hidden="true"><i style="width:${Math.min(100, x.uso * 100).toFixed(1)}%"></i></span>
+        </li>`).join('')}</ul>` : ''}
+    <a class="fin-patrimonio" href="#/finanzas"><span class="suave">Patrimonio</span><strong class="cifra">${escapar(datos.patrimonio)}</strong></a>`;
+}
+
+/** Proyectos en marcha: progreso y lo siguiente que toca. */
+async function htmlProyectos() {
+  const { leerProyectos, hoy, fechaCorta } = await import('../modules/accion/datos.js');
+  const d = await leerProyectos();
+  const h0 = hoy();
+  const activos = d.proyectos.filter((p) => p.estado === 'activo');
+  const filas = activos.slice(0, 4).map((p) => {
+    const tareas = d.tareas.filter((t) => t.proyecto_id === p.id);
+    const hechas = tareas.filter((t) => t.estado === 'hecha').length;
+    const hitos = d.hitos.filter((x) => x.proyecto_id === p.id).sort((a, b) => a.orden - b.orden);
+    const pendiente = tareas.filter((t) => t.estado !== 'hecha')
+      .sort((a, b) => String(a.fecha || '9').localeCompare(String(b.fecha || '9')) || a.prioridad - b.prioridad || String(a.creado).localeCompare(String(b.creado)))[0];
+    const hito = hitos.find((x) => !x.completado_en);
+    const progreso = tareas.length ? hechas / tareas.length : hitos.length ? hitos.filter((x) => x.completado_en).length / hitos.length : 0;
+    const pct = Math.round(progreso * 100);
+    const siguiente = pendiente
+      ? `${escapar(pendiente.titulo)}${pendiente.fecha ? ` · <span class="${pendiente.fecha < h0 ? 'atrasada' : ''}">${pendiente.fecha === h0 ? 'hoy' : fechaCorta(pendiente.fecha)}</span>` : ''}`
+      : hito ? `Hito: ${escapar(hito.titulo)}` : 'Añade el siguiente paso';
+    return `
+      <li><a class="panel-fila" href="#/accion/proyectos/${p.id}">
+        <span class="panel-fila-texto"><strong>${escapar(p.titulo)}</strong><span class="suave">${siguiente}</span></span>
+        <span class="panel-progreso" style="--p:${pct}" role="img" aria-label="${pct} % hecho"><span>${pct}%</span></span>
+      </a></li>`;
+  });
+  return `
+    <div class="titulo-con-enlace"><h2 id="t-proyectos">Proyectos</h2><a class="enlace" href="#/accion/proyectos">${activos.length > 4 ? `Ver los ${activos.length}` : 'Ver todos'}</a></div>
+    ${filas.length ? `<ul class="panel-filas">${filas.join('')}</ul>` : '<p class="suave">No tienes proyectos en marcha.</p>'}`;
+}
+
+/** Listas: las que tienen algo pendiente, con lo primero que queda. */
+async function htmlListas() {
+  const { leerListas } = await import('../modules/accion/datos.js');
+  const d = await leerListas();
+  const conPendientes = d.listas
+    .map((l) => ({ l, pendientes: d.elementos.filter((x) => x.lista_id === l.id && !x.hecho).sort((a, b) => a.orden - b.orden || String(a.creado).localeCompare(String(b.creado))) }))
+    .filter((x) => x.pendientes.length);
+  const filas = conPendientes.slice(0, 3).map(({ l, pendientes }) => `
+    <li><a class="panel-fila" href="#/accion/listas/${l.id}">
+      <span class="panel-fila-texto"><strong>${escapar(l.nombre)}</strong><span class="suave">${pendientes.slice(0, 2).map((x) => escapar(x.texto)).join(' · ')}${pendientes.length > 2 ? ` y ${pendientes.length - 2} más` : ''}</span></span>
+      <span class="panel-cuenta">${pendientes.length}</span>
+    </a></li>`);
+  return `
+    <div class="titulo-con-enlace"><h2 id="t-listas">Listas</h2><a class="enlace" href="#/accion/listas">${d.listas.length ? 'Ver todas' : 'Crear una'}</a></div>
+    ${filas.length ? `<ul class="panel-filas">${filas.join('')}</ul>`
+      : `<p class="suave">${d.listas.length ? 'Nada pendiente en tus listas ✓' : 'Apunta compras, regalos o lo que llevar a un viaje.'}</p>`}`;
+}
+
+/** Rellena una tarjeta con su contenido; si falla (por ejemplo, falta una migración), se oculta. */
+function rellenar(raiz, sel, fabricar) {
+  const caja = raiz.querySelector(sel);
+  if (!caja) return;
+  fabricar().then((html) => { if (caja.isConnected) caja.innerHTML = html; }).catch(() => { caja.hidden = true; });
+}
+
+/** El Panel: resumen de tu situación con acceso a cada departamento (móvil y ordenador). */
+function pintarPanelResumen(raiz, { nombre, ancho }) {
+  const hayAccion = MODULOS.some((m) => m.id === 'accion');
   raiz.innerHTML = `
-    <main class="panel volviendo">
-      ${cabecera(nombre)}
+    <main class="panel volviendo${ancho ? ' panel-ancho' : ''}">
+      <header class="panel-cabecera">
+        <span class="marca">${marcaOrvia()}Orvia</span>
+        <span class="panel-acciones">
+          ${ancho ? `<a class="boton secundario boton-pequeno boton-oficina" href="#/oficina">${ICONO_OFICINA}Ver la oficina</a>` : ''}
+          <a class="boton-icono" href="#/ajustes" aria-label="Ajustes">${ICONOS.ajustes}</a>
+        </span>
+      </header>
+      <div class="panel-saludo">
+        <p>${fechaLarga()}</p>
+        <h1>${saludo()}${nombre ? ', ' + escapar(nombre) : ''}</h1>
+      </div>
 
-      <section class="bloque despacho" aria-labelledby="t-despacho">
-        <h2 id="t-despacho">Tu despacho</h2>
-        <div class="datos-clave">
-          <a class="dato" href="#/finanzas"><span class="etiqueta" id="dc-etiqueta">Te quedan en ${mesActual()}</span><span class="cifra" id="dc-queda">${d.queda}</span></a>
-          <a class="dato" href="#/finanzas"><span class="etiqueta">Patrimonio</span><span class="cifra" id="dc-patrimonio">${d.patrimonio}</span></a>
+      <div class="panel-rejilla">
+        <div class="panel-col panel-col-principal">
+          ${hayAccion ? '<section class="bloque tu-dia" id="tu-dia" data-mundo="accion" aria-labelledby="t-tu-dia"><p class="suave">Cargando tu día…</p></section>' : ''}
+          ${hayAccion ? '<section class="bloque panel-tarjeta panel-proyectos" id="p-proyectos" data-mundo="accion" aria-labelledby="t-proyectos"><p class="suave">Cargando tus proyectos…</p></section>' : ''}
         </div>
-        <p class="nota-despacho" id="dc-nota" hidden></p>
-      </section>
-
-      <section class="bloque tu-dia" id="tu-dia" data-mundo="accion" aria-labelledby="t-tu-dia"><p class="suave">Cargando tu día…</p></section>
+        <div class="panel-col">
+          <section class="bloque despacho panel-tarjeta" id="p-finanzas" aria-labelledby="t-despacho">${htmlFinanzas({ hayFinanzas: null })}</section>
+          ${hayAccion ? '<section class="bloque panel-tarjeta panel-listas" id="p-listas" data-mundo="accion" aria-labelledby="t-listas"></section>' : ''}
+        </div>
+      </div>
 
       <section aria-labelledby="t-equipo">
         <h2 id="t-equipo" class="titulo-seccion">Tu equipo</h2>
-        <div class="equipo">${MODULOS.map((m) => fichaAgente(m, { comoEnlace: true })).join('')}</div>
+        <div class="equipo${ancho ? ' equipo-fila' : ''}">${MODULOS.map((m) => fichaAgente(m, { comoEnlace: true })).join('')}</div>
       </section>
 
-      <a class="boton secundario ancho" href="#/oficina">Ver la oficina en 3D</a>
+      ${ancho ? '' : '<a class="boton secundario ancho" href="#/oficina">Ver la oficina en 3D</a>'}
     </main>`;
+
   leerDatosClave().then((datos) => {
-    if (!raiz.isConnected || !raiz.querySelector('#dc-queda')) return;
-    raiz.querySelector('#dc-queda').textContent = datos.queda;
-    raiz.querySelector('#dc-patrimonio').textContent = datos.patrimonio;
-    if (datos.mes) raiz.querySelector('#dc-etiqueta').textContent = datos.etiquetaQueda;
-    const nota = raiz.querySelector('#dc-nota');
-    nota.hidden = datos.hayFinanzas;
-    nota.textContent = 'Las cifras aparecerán cuando pongas en marcha Finanzas.';
+    const caja = raiz.querySelector('#p-finanzas');
+    if (caja?.isConnected) caja.innerHTML = htmlFinanzas(datos);
   });
   montarTuDiaEn(raiz.querySelector('#tu-dia'), { raiz });
   leerCerebroEn(raiz);
-  return () => {};
+  const proyectosYListas = () => {
+    rellenar(raiz, '#p-proyectos', htmlProyectos);
+    rellenar(raiz, '#p-listas', htmlListas);
+  };
+  if (hayAccion) proyectosYListas();
+  // Si marcas una tarea en «Tu día», el proyecto avanza aquí también.
+  const alCambiar = () => (raiz.querySelector('#p-proyectos')?.isConnected ? proyectosYListas() : removeEventListener('orvia:accion', alCambiar));
+  if (hayAccion) addEventListener('orvia:accion', alCambiar);
+  return () => removeEventListener('orvia:accion', alCambiar);
 }
 
 /** Oficina 3D con sus fichas debajo (Panel del ordenador o #/oficina en el móvil). */
@@ -236,6 +346,5 @@ function pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta }) {
 export function pintarPanel(raiz, { sesion, alAbrirModulo, soloOficina = false }) {
   const nombre = sesion?.user?.user_metadata?.nombre;
   if (soloOficina) return pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta: true });
-  if (ES_ESCRITORIO.matches) return pintarOficina(raiz, { nombre, alAbrirModulo, pantallaCompleta: false });
-  return pintarPanelMovil(raiz, { nombre });
+  return pintarPanelResumen(raiz, { nombre, ancho: ES_ESCRITORIO.matches });
 }
